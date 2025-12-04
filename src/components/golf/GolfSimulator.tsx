@@ -170,7 +170,7 @@ export default function GolfSimulator() {
   const handleClearPath = () => setTrajectory([ballPosition]);
 
   const viewboxX = ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50;
-  const viewboxY = - (COURSE_HEIGHT / zoom) * 0.6;
+  const viewboxY = - (COURSE_HEIGHT / zoom) * 0.8;
   const viewBox = `${viewboxX} ${viewboxY} ${COURSE_WIDTH / zoom} ${COURSE_HEIGHT / zoom}`;
 
   return (
