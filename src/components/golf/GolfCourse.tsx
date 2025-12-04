@@ -1,0 +1,121 @@
+'use client';
+
+import type { Point } from '@/lib/types';
+import { GolferIcon, GolfFlagIcon } from './icons';
+
+type GolfCourseProps = {
+  ballPosition: Point;
+  trajectory: Point[];
+  aimingArc: Point[];
+  viewBox: string;
+  courseWidth: number;
+  courseHeight: number;
+  pixelsPerMeter: number;
+  targetDistance: number;
+};
+
+const TEE_X_OFFSET = 50;
+
+export default function GolfCourse({
+  ballPosition,
+  trajectory,
+  aimingArc,
+  viewBox,
+  courseWidth,
+  courseHeight,
+  pixelsPerMeter,
+  targetDistance,
+}: GolfCourseProps) {
+  const groundY = courseHeight - 50;
+
+  const worldToSvg = (point: Point): Point => {
+    return {
+      x: point.x * pixelsPerMeter + TEE_X_OFFSET,
+      y: groundY - point.y * pixelsPerMeter,
+    };
+  };
+
+  const svgBallPosition = worldToSvg(ballPosition);
+  const svgTrajectory = trajectory.map(worldToSvg);
+  const svgAimingArc = aimingArc.map(worldToSvg);
+
+  const pathData = (points: Point[]) => {
+    if (points.length === 0) return '';
+    return `M ${points[0].x} ${points[0].y} ` + points.slice(1).map(p => `L ${p.x} ${p.y}`).join(' ');
+  };
+  
+  const trajectoryPathData = pathData(svgTrajectory);
+  const aimingArcPathData = pathData(svgAimingArc);
+
+  return (
+    <svg
+      width="100%"
+      height="100%"
+      viewBox={viewBox}
+      preserveAspectRatio="xMidYMid meet"
+      className="bg-background"
+    >
+      <defs>
+        <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{ stopColor: '#87CEEB', stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: 'hsl(var(--background))', stopOpacity: 1 }} />
+        </linearGradient>
+      </defs>
+
+      {/* Sky */}
+      <rect x={-courseWidth} y={-courseHeight*2} width={courseWidth * 4} height={courseHeight*3} fill="url(#skyGradient)" />
+
+      {/* Ground */}
+      <rect x={-courseWidth} y={groundY} width={courseWidth * 4} height={courseHeight} fill="hsl(var(--primary))" />
+      
+      {/* Tee Box */}
+      <g transform={`translate(${TEE_X_OFFSET - 35}, ${groundY - 10})`}>
+        <GolferIcon />
+      </g>
+      
+      {/* Target Flag */}
+      <g transform={`translate(${targetDistance * pixelsPerMeter + TEE_X_OFFSET - 10}, ${groundY - 75})`}>
+        <GolfFlagIcon />
+        <text x="0" y="25" fontSize="14" fill="currentColor" textAnchor="middle">{targetDistance}m</text>
+      </g>
+
+      {/* Aiming Arc */}
+      {aimingArc.length > 0 && (
+        <path
+          d={aimingArcPathData}
+          fill="none"
+          stroke="hsl(var(--accent))"
+          strokeWidth="2"
+          strokeDasharray="4 8"
+          strokeOpacity="0.7"
+        />
+      )}
+      
+      {/* Trajectory Path */}
+      {trajectory.length > 1 && (
+         <path
+          d={trajectoryPathData}
+          fill="none"
+          stroke="hsl(var(--foreground))"
+          strokeWidth="1.5"
+          strokeOpacity="0.3"
+        />
+      )}
+
+      {/* Fading trajectory dots */}
+      {svgTrajectory.slice(0, -1).map((p, i) => (
+        <circle
+          key={`dot-${i}`}
+          cx={p.x}
+          cy={p.y}
+          r="1.5"
+          fill="hsl(var(--foreground))"
+          opacity={Math.max(0, 1 - (svgTrajectory.length - i - 2) * 0.05)}
+        />
+      ))}
+      
+      {/* Ball */}
+      <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
+    </svg>
+  );
+}
