@@ -169,8 +169,11 @@ export default function GolfSimulator() {
   const handlePlay = () => setStatus('flying');
   const handleClearPath = () => setTrajectory([ballPosition]);
 
+  const groundY = COURSE_HEIGHT - 50;
+  const ballSvgY = groundY - (ballPosition.y * PIXELS_PER_METER);
+
   const viewboxX = ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50;
-  const viewboxY = (COURSE_HEIGHT - 50) - (COURSE_HEIGHT / zoom) * 0.9 - (ballPosition.y * PIXELS_PER_METER);
+  const viewboxY = ballSvgY - (COURSE_HEIGHT / zoom / 2);
   const viewBox = `${viewboxX} ${viewboxY} ${COURSE_WIDTH / zoom} ${COURSE_HEIGHT / zoom}`;
 
   return (
