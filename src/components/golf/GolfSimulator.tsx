@@ -45,9 +45,11 @@ export default function GolfSimulator() {
   const lastFrameTime = useRef<number>(performance.now());
   const animationFrameId = useRef<number>();
   const simulationTime = useRef(0);
+  const isSwinging = useRef(false);
 
   const resetSimulation = useCallback(() => {
     setStatus('idle');
+    isSwinging.current = false;
     setBallPosition({ x: 0, y: 0 });
     setBallVelocity({ x: 0, y: 0 });
     setTrajectory([]);
@@ -87,49 +89,68 @@ export default function GolfSimulator() {
     const timeFactor = isSlowMotion ? 0.25 : 1.0;
     const dt = timeDelta * timeFactor;
     simulationTime.current += dt;
-
-    let { x, y } = ballPosition;
-    let { x: vx, y: vy } = ballVelocity;
     
-    if (params.airResistance) {
-      const area = Math.PI * (params.diameter / 2) ** 2;
-      const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
-      const v = Math.sqrt(vx ** 2 + vy ** 2);
-      const fx = -dragConstant * vx * v;
-      const fy = -dragConstant * vy * v;
-      const ax = fx / params.mass;
-      const ay = -params.gravity + (fy / params.mass);
-      vx += ax * dt;
-      vy += ay * dt;
-    } else {
-      vy -= params.gravity * dt;
-    }
+    setBallVelocity(prevVelocity => {
+      let { x: vx, y: vy } = prevVelocity;
 
-    x += vx * dt;
-    y += vy * dt;
-    
-    setBallPosition({ x, y });
-    setBallVelocity({ x: vx, y: vy });
-    setTrajectory(prev => [...prev, { x, y }]);
-    setStats(prev => ({ ...prev, maxHeight: Math.max(prev.maxHeight, y) }));
+      if (params.airResistance) {
+        const area = Math.PI * (params.diameter / 2) ** 2;
+        const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
+        const v = Math.sqrt(vx ** 2 + vy ** 2);
+        const fx = -dragConstant * vx * v;
+        const fy = -dragConstant * vy * v;
+        const ax = fx / params.mass;
+        const ay = -params.gravity + (fy / params.mass);
+        vx += ax * dt;
+        vy += ay * dt;
+      } else {
+        vy -= params.gravity * dt;
+      }
 
-    if (y < 0) {
-      setStatus('finished');
-      const impactSpeed = Math.sqrt(vx**2 + vy**2);
-      setStats(prev => ({
-        ...prev,
-        flightTime: simulationTime.current,
-        horizontalDistance: x,
-        impactSpeed: impactSpeed
-      }));
-      return;
-    }
+      setBallPosition(prevPos => {
+        const newPos = {
+          x: prevPos.x + vx * dt,
+          y: prevPos.y + vy * dt,
+        };
+
+        setTrajectory(prevTraj => [...prevTraj, newPos]);
+        setStats(prevStats => ({ ...prevStats, maxHeight: Math.max(prevStats.maxHeight, newPos.y) }));
+
+        if (newPos.y < 0 && status === 'flying') {
+          setStatus('finished');
+          const impactSpeed = Math.sqrt(vx**2 + vy**2);
+          setStats(prev => ({
+            ...prev,
+            flightTime: simulationTime.current,
+            horizontalDistance: newPos.x,
+            impactSpeed: impactSpeed
+          }));
+        }
+        return newPos;
+      });
+
+      return { x: vx, y: vy };
+    });
 
     animationFrameId.current = requestAnimationFrame(simulationLoop);
-  }, [ballPosition, ballVelocity, params, isSlowMotion]);
+  }, [params, isSlowMotion, status]);
 
   useEffect(() => {
     if (status === 'flying') {
+      if (!isSwinging.current) {
+        const angleRad = (params.angle * Math.PI) / 180;
+        const launchSpeed = params.initialVelocity;
+        const v0x = launchSpeed * Math.cos(angleRad);
+        const v0y = launchSpeed * Math.sin(angleRad);
+
+        resetSimulation();
+        isSwinging.current = true;
+        setBallVelocity({ x: v0x, y: v0y });
+        setStats({ ...initialStats, launchSpeed });
+        setTrajectory([{ x: 0, y: 0 }]);
+        setStatus('flying');
+      }
+
       lastFrameTime.current = performance.now();
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
@@ -138,20 +159,10 @@ export default function GolfSimulator() {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [status, simulationLoop]);
+  }, [status, simulationLoop, params.angle, params.initialVelocity, resetSimulation]);
   
   const handleSwing = () => {
-    resetSimulation();
     setStatus('flying');
-    
-    const angleRad = (params.angle * Math.PI) / 180;
-    const launchSpeed = params.initialVelocity;
-    const v0x = launchSpeed * Math.cos(angleRad);
-    const v0y = launchSpeed * Math.sin(angleRad);
-
-    setBallVelocity({ x: v0x, y: v0y });
-    setStats({ ...initialStats, launchSpeed });
-    setTrajectory([{ x: 0, y: 0 }]);
   };
 
   const handlePause = () => setStatus('paused');
