@@ -169,12 +169,31 @@ export default function GolfSimulator() {
   const handlePlay = () => setStatus('flying');
   const handleClearPath = () => setTrajectory([ballPosition]);
 
-  const groundY = COURSE_HEIGHT - 50;
-  const ballSvgY = groundY - (ballPosition.y * PIXELS_PER_METER);
+  // --- CAMERA LOGIC ---
+  let viewBox: string;
 
-  const viewboxX = ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50;
-  const viewboxY = ballSvgY - (COURSE_HEIGHT / zoom / 2);
-  const viewBox = `${viewboxX} ${viewboxY} ${COURSE_WIDTH / zoom} ${COURSE_HEIGHT / zoom}`;
+  if (status === 'finished' && stats.horizontalDistance > 0) {
+    // Zoom out to show the whole shot
+    const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 200;
+    const totalHeight = totalWidth * (COURSE_HEIGHT / COURSE_WIDTH);
+    const viewboxX = -100;
+    const viewboxY = -totalHeight + (COURSE_HEIGHT - 50); // Show a bit of sky
+    viewBox = `${viewboxX} ${viewboxY} ${totalWidth} ${totalHeight}`;
+  } else {
+    // Follow the ball or stay at the start
+    const ballSvgY = (COURSE_HEIGHT - 50) - (ballPosition.y * PIXELS_PER_METER);
+    let viewboxX: number;
+    let viewboxY: number;
+
+    if (status === 'idle') {
+      viewboxX = -COURSE_WIDTH / 2 + 50;
+      viewboxY = 0;
+    } else {
+      viewboxX = ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50;
+      viewboxY = ballSvgY - (COURSE_HEIGHT / zoom / 2);
+    }
+    viewBox = `${viewboxX} ${viewboxY} ${COURSE_WIDTH / zoom} ${COURSE_HEIGHT / zoom}`;
+  }
 
   return (
     <div className="w-screen h-screen overflow-hidden relative font-sans">
@@ -187,6 +206,8 @@ export default function GolfSimulator() {
         courseHeight={COURSE_HEIGHT}
         pixelsPerMeter={PIXELS_PER_METER}
         targetDistance={TARGET_DISTANCE}
+        status={status}
+        finalDistance={stats.horizontalDistance}
       />
       <DataOverlay stats={stats} status={status} />
       <PhysicsControls

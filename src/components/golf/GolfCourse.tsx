@@ -1,6 +1,6 @@
 'use client';
 
-import type { Point } from '@/lib/types';
+import type { Point, SimulationStatus } from '@/lib/types';
 import { GolferIcon, GolfFlagIcon } from './icons';
 
 type GolfCourseProps = {
@@ -12,6 +12,8 @@ type GolfCourseProps = {
   courseHeight: number;
   pixelsPerMeter: number;
   targetDistance: number;
+  status: SimulationStatus;
+  finalDistance: number;
 };
 
 const TEE_X_OFFSET = 50;
@@ -25,6 +27,8 @@ export default function GolfCourse({
   courseHeight,
   pixelsPerMeter,
   targetDistance,
+  status,
+  finalDistance
 }: GolfCourseProps) {
   const groundY = courseHeight - 50;
 
@@ -46,6 +50,8 @@ export default function GolfCourse({
   
   const trajectoryPathData = pathData(svgTrajectory);
   const aimingArcPathData = pathData(svgAimingArc);
+  
+  const finalBallSvgX = finalDistance * pixelsPerMeter + TEE_X_OFFSET;
 
   return (
     <svg
@@ -57,16 +63,28 @@ export default function GolfCourse({
     >
       <defs>
         <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#4682B4', stopOpacity: 1 }} />
+          <stop offset="0%" style={{ stopColor: '#0077be', stopOpacity: 1 }} />
+          <stop offset="80%" style={{ stopColor: '#87CEEB', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'hsl(var(--background))', stopOpacity: 1 }} />
         </linearGradient>
+        <marker
+          id="arrowhead"
+          markerWidth="10"
+          markerHeight="7"
+          refX="0"
+          refY="3.5"
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
+        </marker>
       </defs>
 
       {/* Sky */}
-      <rect x={-courseWidth} y={-courseHeight*2} width={courseWidth * 4} height={courseHeight*3} fill="url(#skyGradient)" />
+      <rect x={-courseWidth*2} y={-courseHeight*2} width={courseWidth * 5} height={groundY + courseHeight*2} fill="url(#skyGradient)" />
 
       {/* Ground */}
-      <rect x={-courseWidth} y={groundY} width={courseWidth * 4} height={courseHeight} fill="hsl(var(--primary))" />
+      <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
       
       {/* Tee Box */}
       <g transform={`translate(${TEE_X_OFFSET - 35}, ${groundY - 10})`}>
@@ -113,6 +131,32 @@ export default function GolfCourse({
           opacity={Math.max(0, 1 - (svgTrajectory.length - i - 2) * 0.05)}
         />
       ))}
+
+      {/* Distance line on finish */}
+      {status === 'finished' && finalDistance > 0 && (
+        <g className="text-foreground">
+          <line
+            x1={TEE_X_OFFSET}
+            y1={groundY + 20}
+            x2={finalBallSvgX}
+            y2={groundY + 20}
+            stroke="currentColor"
+            strokeWidth="2"
+            markerStart="url(#arrowhead)"
+            markerEnd="url(#arrowhead)"
+          />
+          <text
+            x={TEE_X_OFFSET + (finalBallSvgX - TEE_X_OFFSET) / 2}
+            y={groundY + 15}
+            textAnchor="middle"
+            fontSize="16"
+            fontWeight="bold"
+            fill="currentColor"
+          >
+            {finalDistance.toFixed(2)}m
+          </text>
+        </g>
+      )}
       
       {/* Ball */}
       <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
