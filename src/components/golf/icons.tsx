@@ -29,7 +29,7 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
       <g 
         className={animationClass} 
         style={{ 
-          transformOrigin: '0px -10px', 
+          transformOrigin: '0px -80px', 
           transform: `rotate(${clubRotation}deg)`,
           ...animationStyle
         }}

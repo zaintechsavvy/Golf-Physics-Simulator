@@ -91,7 +91,7 @@ export default function GolfCourse({
       <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
       
       {/* Golf Club */}
-      <g transform={`translate(${TEE_X_OFFSET - 15}, ${groundY - 5})`}>
+      <g transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`}>
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
