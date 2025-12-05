@@ -59,16 +59,6 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
       </CardHeader>
       <CardContent className="grid gap-6">
         <SliderControl
-          label="Launch Angle"
-          value={params.angle}
-          min={0}
-          max={90}
-          step={1}
-          unit="°"
-          onChange={(v) => onParamChange({ angle: v })}
-          disabled={isSimulating}
-        />
-        <SliderControl
           label="Initial Velocity"
           value={params.initialVelocity}
           min={0}

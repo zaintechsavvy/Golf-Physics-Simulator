@@ -5,6 +5,7 @@ import PhysicsControls from './PhysicsControls';
 import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
 import GolfCourse from './GolfCourse';
+import AngleControl from './AngleControl';
 
 const G_CONSTANT = 9.80665; // standard gravity
 const AIR_DENSITY = 1.225; // kg/m^3
@@ -46,7 +47,7 @@ export default function GolfSimulator() {
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
-  const [zoom, setZoom] = useState(0.8);
+  const [zoom, setZoom] = useState(0.7);
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
@@ -86,20 +87,10 @@ export default function GolfSimulator() {
       let tempVx = v0x;
       let tempVy = v0y;
 
+      // This aiming arc calculation does NOT account for air resistance
+      // to show the ideal trajectory vs the actual one.
       for (let t = 0; t < 20; t += dt) {
-        if (params.airResistance) {
-          const area = Math.PI * (params.diameter / 2) ** 2;
-          const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
-          const v = Math.sqrt(tempVx ** 2 + tempVy ** 2);
-          const fx = -dragConstant * tempVx * v;
-          const fy = -dragConstant * tempVy * v;
-          const ax = fx / params.mass;
-          const ay = -params.gravity + (fy / params.mass);
-          tempVx += ax * dt;
-          tempVy += ay * dt;
-        } else {
-          tempVy -= params.gravity * dt;
-        }
+        tempVy -= params.gravity * dt;
         tempX += tempVx * dt;
         tempY += tempVy * dt;
 
@@ -110,7 +101,7 @@ export default function GolfSimulator() {
     } else {
       setAimingArc([]);
     }
-  }, [params, status]);
+  }, [params.angle, params.initialVelocity, params.gravity, status]);
   
   const simulationLoop = useCallback((now: number) => {
     let currentVelocity = {x: 0, y: 0};
@@ -205,7 +196,7 @@ export default function GolfSimulator() {
     };
   }, [status, simulationLoop]);
   
-  const handleSwing = () => {
+ const handleSwing = () => {
     resetSimulation();
     
     // Use a callback with setTrajectory to ensure it's reset before starting
@@ -231,31 +222,28 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT / 2.5,
+    y: -COURSE_HEIGHT * zoom / 1.5,
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
 
   const getFlyingView = (): ViewBox => ({
     x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
-    y: -(COURSE_HEIGHT / zoom / 2) + (COURSE_HEIGHT - 50) - (ballPosition.y * PIXELS_PER_METER),
+    y: ballPosition.y * -PIXELS_PER_METER - (COURSE_HEIGHT / zoom / 2) + (COURSE_HEIGHT - 50),
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
 
-  const getFinishedView = (): ViewBox => {
+ const getFinishedView = (): ViewBox => {
     const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 300; // Add padding
     const maxHeightPixels = stats.maxHeight * PIXELS_PER_METER;
     const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
   
-    // Determine the required height based on width and aspect ratio
     let requiredHeight = totalWidth / courseAspectRatio;
-  
-    // Ensure the height is enough to show the max height of the trajectory
     requiredHeight = Math.max(requiredHeight, maxHeightPixels + 200); // Add vertical padding
   
-    // Center the view vertically on the trajectory
-    const yOffset = -requiredHeight / 2 + (maxHeightPixels / 2);
+    // Center the view vertically on the trajectory, but biased towards the ground
+    const yOffset = -requiredHeight + (maxHeightPixels / 2) + (COURSE_HEIGHT - 50);
   
     return {
       x: -150, // Start a bit before the tee
@@ -321,9 +309,10 @@ export default function GolfSimulator() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, ballPosition, stats, zoom]); 
+  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom]); 
   
   useEffect(() => {
+    // This effect ensures that on the first load and on resets, the camera snaps to the idle position without animation.
     if (status === 'idle') {
       if (cameraAnimationRef.current) {
         cancelAnimationFrame(cameraAnimationRef.current);
@@ -350,6 +339,11 @@ export default function GolfSimulator() {
         finalDistance={stats.horizontalDistance}
       />
       <DataOverlay stats={stats} status={status} />
+      <AngleControl
+        angle={params.angle}
+        onAngleChange={(angle) => handleParamChange({ angle })}
+        disabled={status === 'flying' || status === 'paused'}
+      />
       <PhysicsControls
         params={params}
         onParamChange={handleParamChange}
