@@ -2,9 +2,15 @@ import type { SVGProps } from 'react';
 import type { SimulationStatus } from '@/lib/types';
 
 export function GolfClubIcon({ swingState, launchAngle }: { swingState: SimulationStatus, launchAngle: number }) {
-  const clubRotation = -launchAngle;
+  // Determine rotation based on state.
+  // In idle, it shows the backswing based on launchAngle.
+  // During/after flight, it rests.
+  const clubRotation = swingState === 'idle' ? -launchAngle : 20;
+  
   let animationClass = '';
-
+  // The --final-rotation CSS variable will be the resting angle after the swing.
+  const animationStyle = { '--final-rotation': '20deg' };
+  
   if (swingState === 'flying') {
     animationClass = 'swing-animation';
   }
@@ -18,7 +24,11 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
     >
       <g 
         className={animationClass} 
-        style={{ transformOrigin: '0px -10px', transform: `rotate(${clubRotation}deg)` }}
+        style={{ 
+          transformOrigin: '0px -10px', 
+          transform: `rotate(${clubRotation}deg)`,
+          ...animationStyle
+        }}
       >
         {/* Shaft */}
         <rect x="-2.5" y="-80" width="5" height="75" fill="#C0C0C0" />
