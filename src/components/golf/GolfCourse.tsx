@@ -1,5 +1,5 @@
 'use client';
-
+import { forwardRef } from 'react';
 import type { Point, SimulationStatus } from '@/lib/types';
 import { GolfClubIcon, GolfFlagIcon } from './icons';
 
@@ -17,11 +17,12 @@ type GolfCourseProps = {
   maxHeightPoint: Point | null;
   launchAngle: number;
   launchSpeed: number;
+  onAngleDragStart: (e: React.MouseEvent) => void;
 };
 
 const TEE_X_OFFSET = 50;
 
-export default function GolfCourse({
+const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   ballPosition,
   trajectory,
   aimingArc,
@@ -34,8 +35,9 @@ export default function GolfCourse({
   finalDistance,
   maxHeightPoint,
   launchAngle,
-  launchSpeed
-}: GolfCourseProps) {
+  launchSpeed,
+  onAngleDragStart,
+}, ref) => {
   const groundY = courseHeight - 50;
 
   const worldToSvg = (point: Point): Point => {
@@ -62,6 +64,7 @@ export default function GolfCourse({
 
   return (
     <svg
+      ref={ref}
       width="100%"
       height="100%"
       viewBox={viewBox}
@@ -94,7 +97,11 @@ export default function GolfCourse({
       <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
       
       {/* Golf Club */}
-      <g transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`}>
+      <g 
+        transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`} 
+        onMouseDown={onAngleDragStart}
+        className={(status === 'idle' || status === 'finished') ? 'cursor-grab active:cursor-grabbing' : ''}
+      >
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
@@ -199,4 +206,7 @@ export default function GolfCourse({
       )}
     </svg>
   );
-}
+});
+GolfCourse.displayName = 'GolfCourse';
+
+export default GolfCourse;

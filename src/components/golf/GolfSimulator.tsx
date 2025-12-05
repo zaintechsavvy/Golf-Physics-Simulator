@@ -5,7 +5,6 @@ import PhysicsControls from './PhysicsControls';
 import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
 import GolfCourse from './GolfCourse';
-import AngleControl from './AngleControl';
 import { cn } from '@/lib/utils';
 
 const G_CONSTANT = 9.80665; // standard gravity
@@ -53,6 +52,7 @@ export default function GolfSimulator() {
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [isDragging, setIsDragging] = useState(false);
+  const [isSettingAngle, setIsSettingAngle] = useState(false);
   const lastDragPoint = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
@@ -63,6 +63,8 @@ export default function GolfSimulator() {
 
   const lastFrameTime = useRef<number>(performance.now());
   const simulationTime = useRef(0);
+  
+  const courseRef = useRef<SVGSVGElement>(null);
 
   const resetSimulation = useCallback(() => {
     if (animationFrameId.current) {
@@ -238,14 +240,59 @@ export default function GolfSimulator() {
   const handlePlay = () => setStatus('flying');
   const handleClearPath = () => setTrajectory([ballPosition]);
 
+  // --- ANGLE DRAG LOGIC ---
+  const handleAngleDragStart = (e: React.MouseEvent) => {
+    if (status !== 'idle' && status !== 'finished') return;
+    e.stopPropagation(); // Prevent canvas drag
+    setIsSettingAngle(true);
+  };
+  
+  const handleAngleDragMove = (e: React.MouseEvent) => {
+    if (!isSettingAngle) return;
+    
+    const svg = courseRef.current;
+    if (!svg) return;
+    
+    const svgPoint = svg.createSVGPoint();
+    svgPoint.x = e.clientX;
+    svgPoint.y = e.clientY;
+    
+    const transformedPoint = svgPoint.matrixTransform(svg.getScreenCTM()?.inverse());
+
+    // Club's pivot point in SVG coordinates
+    const pivotX = 50 - 45;
+    const pivotY = (COURSE_HEIGHT - 50) - 80;
+    
+    const dx = transformedPoint.x - pivotX;
+    const dy = transformedPoint.y - pivotY;
+    
+    let angleRad = Math.atan2(dy, dx);
+    // Convert to degrees and adjust so 0 is horizontal
+    let angleDeg = angleRad * (180 / Math.PI) + 90;
+    
+    // Clamp the angle between 0 and 90
+    angleDeg = Math.max(0, Math.min(90, angleDeg));
+    
+    handleParamChange({ angle: angleDeg });
+  };
+  
+  const handleAngleDragEnd = () => {
+    setIsSettingAngle(false);
+  };
+
+
   // --- CAMERA DRAG LOGIC ---
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return; // Only allow left-click dragging
+    if (e.button !== 0 || isSettingAngle) return; // Only left-click, not while setting angle
     setIsDragging(true);
     lastDragPoint.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isSettingAngle) {
+       handleAngleDragMove(e);
+       return;
+    }
     if (!isDragging) return;
     const scale = viewBox.width / COURSE_WIDTH;
     const dx = e.clientX - lastDragPoint.current.x;
@@ -261,11 +308,21 @@ export default function GolfSimulator() {
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    if (isSettingAngle) {
+      handleAngleDragEnd();
+    }
+    if (isDragging) {
+      setIsDragging(false);
+    }
   };
   
   const handleMouseLeave = () => {
-    setIsDragging(false);
+    if (isSettingAngle) {
+      handleAngleDragEnd();
+    }
+    if (isDragging) {
+      setIsDragging(false);
+    }
   };
 
   // --- CAMERA LOGIC ---
@@ -306,7 +363,7 @@ export default function GolfSimulator() {
   const cameraAnimationRef = useRef<number>();
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isSettingAngle) {
       if (cameraAnimationRef.current) cancelAnimationFrame(cameraAnimationRef.current);
       cameraAnimationRef.current = undefined;
       return;
@@ -364,7 +421,7 @@ export default function GolfSimulator() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom, isDragging]); 
+  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom, isDragging, isSettingAngle]); 
   
   useEffect(() => {
     // This effect ensures that on the first load and on resets, the camera snaps to the idle position without animation.
@@ -383,7 +440,7 @@ export default function GolfSimulator() {
     <div 
       className={cn(
         "w-screen h-screen overflow-hidden relative font-sans",
-        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        isDragging ? 'cursor-grabbing' : (isSettingAngle ? 'cursor-grabbing' : 'cursor-grab')
       )}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -394,6 +451,7 @@ export default function GolfSimulator() {
       <audio ref={landSfxRef} src="https://cdn.freesound.org/previews/511/511874_11157367-lq.mp3" preload="auto" />
 
       <GolfCourse
+        ref={courseRef}
         ballPosition={ballPosition}
         trajectory={trajectory}
         aimingArc={aimingArc}
@@ -407,13 +465,9 @@ export default function GolfSimulator() {
         maxHeightPoint={stats.maxHeightPoint}
         launchAngle={params.angle}
         launchSpeed={params.initialVelocity}
+        onAngleDragStart={handleAngleDragStart}
       />
       <DataOverlay stats={stats} status={status} />
-      <AngleControl
-        angle={params.angle}
-        onAngleChange={(angle) => handleParamChange({ angle })}
-        disabled={status === 'flying' || status === 'paused'}
-      />
       <PhysicsControls
         params={params}
         onParamChange={handleParamChange}

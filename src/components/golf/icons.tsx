@@ -8,13 +8,13 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
   const getClubRotation = () => {
     switch (swingState) {
       case 'idle':
+      case 'finished':
         return launchAngle;
       case 'flying':
         // During animation, the CSS class handles rotation.
         // We set it to the final state to avoid a jump if the component re-renders.
         return 20; 
       case 'paused':
-      case 'finished':
       default:
         return 20; // Resting angle
     }
