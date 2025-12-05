@@ -336,7 +336,7 @@ export default function GolfSimulator() {
 
   return (
     <div className="w-screen h-screen overflow-hidden relative font-sans">
-      <audio ref={swingSfxRef} src="https://cdn.freesound.org/previews/341/341629_5824896-lq.mp3" preload="auto" />
+      <audio ref={swingSfxRef} src="/golf-14-94167.mp3" preload="auto" />
       <audio ref={landSfxRef} src="https://cdn.freesound.org/previews/511/511874_11157367-lq.mp3" preload="auto" />
 
       <GolfCourse
