@@ -47,7 +47,7 @@ export default function GolfSimulator() {
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
-  const [zoom, setZoom] = useState(0.7);
+  const [zoom, setZoom] = useState(0.8);
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
@@ -222,7 +222,7 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * zoom / 1.5,
+    y: -COURSE_HEIGHT * zoom + 400,
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
@@ -243,7 +243,7 @@ export default function GolfSimulator() {
     requiredHeight = Math.max(requiredHeight, maxHeightPixels + 200); // Add vertical padding
   
     // Center the view vertically on the trajectory, but biased towards the ground
-    const yOffset = -requiredHeight + (maxHeightPixels / 2) + (COURSE_HEIGHT - 50);
+    const yOffset = -requiredHeight + maxHeightPixels / 2 + (COURSE_HEIGHT - 50);
   
     return {
       x: -150, // Start a bit before the tee

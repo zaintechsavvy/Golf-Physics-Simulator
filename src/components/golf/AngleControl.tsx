@@ -17,7 +17,7 @@ export default function AngleControl({ angle, onAngleChange, disabled }: AngleCo
         <Label htmlFor="launch-angle" className="text-center">
           Launch Angle
         </Label>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center py-4">
           <Slider
             id="launch-angle"
             orientation="vertical"
@@ -27,7 +27,7 @@ export default function AngleControl({ angle, onAngleChange, disabled }: AngleCo
             step={1}
             onValueChange={([v]) => onAngleChange(v)}
             disabled={disabled}
-            className="h-4/5"
+            className="h-full"
           />
         </div>
         <span className="font-semibold text-lg">{angle.toFixed(0)}°</span>
