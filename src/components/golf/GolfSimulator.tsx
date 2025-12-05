@@ -7,18 +7,17 @@ import DataOverlay from './DataOverlay';
 import GolfCourse from './GolfCourse';
 import { cn } from '@/lib/utils';
 import AngleControl from './AngleControl';
+import { calculateTrajectory, type SimulationResult } from '@/lib/physics';
 
-const G_CONSTANT = 9.80665; // standard gravity
-const AIR_DENSITY = 1.225; // kg/m^3
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
 const COURSE_HEIGHT = 800;
 const TARGET_DISTANCE = 350; // meters
 
 const initialPhysicsState: PhysicsState = {
-  angle: 45,
+  angle: 0,
   initialVelocity: 40,
-  gravity: G_CONSTANT,
+  gravity: 9.80665,
   mass: 0.0459, // Standard golf ball mass in kg
   diameter: 0.0427, // Standard golf ball diameter in m
   airResistance: true,
@@ -45,7 +44,6 @@ export default function GolfSimulator() {
   const [params, setParams] = useState<PhysicsState>(initialPhysicsState);
   const [status, setStatus] = useState<SimulationStatus>('idle');
   const [ballPosition, setBallPosition] = useState<Point>({ x: 0, y: 0 });
-  const [ballVelocity, setBallVelocity] = useState<Point>({ x: 0, y: 0 });
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
@@ -64,6 +62,7 @@ export default function GolfSimulator() {
 
   const lastFrameTime = useRef<number>(performance.now());
   const simulationTime = useRef(0);
+  const trajectoryData = useRef<SimulationResult | null>(null);
   
   const courseRef = useRef<SVGSVGElement>(null);
 
@@ -75,11 +74,11 @@ export default function GolfSimulator() {
     
     setStatus('idle');
     setBallPosition({ x: 0, y: 0 });
-    setBallVelocity({ x: 0, y: 0 });
     setTrajectory([]);
     setStats(initialStats);
     simulationTime.current = 0;
     lastFrameTime.current = performance.now();
+    trajectoryData.current = null;
   }, []);
 
   const handleParamChange = (newParams: Partial<PhysicsState>) => {
@@ -88,116 +87,63 @@ export default function GolfSimulator() {
 
   useEffect(() => {
     if (status === 'idle' || status === 'finished') {
-      const angleRad = (params.angle * Math.PI) / 180;
-      const v0x = params.initialVelocity * Math.cos(angleRad);
-      const v0y = params.initialVelocity * Math.sin(angleRad);
-      const arcPoints: Point[] = [];
-      const dt = 0.1;
-      let tempX = 0;
-      let tempY = 0;
-      let tempVx = v0x;
-      let tempVy = v0y;
-
-      // This aiming arc calculation does NOT account for air resistance
-      // to show the ideal trajectory vs the actual one.
-      for (let t = 0; t < 20; t += dt) {
-        tempVy -= params.gravity * dt;
-        tempX += tempVx * dt;
-        tempY += tempVy * dt;
-
-        if (tempY < 0) break;
-        arcPoints.push({ x: tempX, y: tempY });
-      }
+      const idealParams = { ...params, airResistance: false };
+      const { trajectory: arcPoints } = calculateTrajectory(idealParams, 0.1);
       setAimingArc(arcPoints);
     } else {
       setAimingArc([]);
     }
-  }, [params.angle, params.initialVelocity, params.gravity, status]);
+  }, [params, status]);
   
   const simulationLoop = useCallback((now: number) => {
-    let currentVelocity = {x: 0, y: 0};
-    setBallVelocity(prevVel => {
-      currentVelocity = prevVel;
-      return prevVel;
-    });
-
+    if (!trajectoryData.current) {
+      setStatus('finished');
+      return;
+    }
+  
     const timeDelta = (now - lastFrameTime.current) / 1000;
     lastFrameTime.current = now;
     
     const timeFactor = isSlowMotion ? 0.25 : 1.0;
-    const dt = timeDelta * timeFactor;
+    simulationTime.current += timeDelta * timeFactor;
+  
+    const { trajectory: trajPoints, finalStats } = trajectoryData.current;
     
-    setBallPosition(prevPos => {
-      let { x: vx, y: vy } = currentVelocity;
-      let newVx = vx;
-      let newVy = vy;
-
-      if (params.airResistance) {
-        const area = Math.PI * (params.diameter / 2) ** 2;
-        const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
-        const v = Math.sqrt(newVx ** 2 + newVy ** 2);
-        const fx = -dragConstant * newVx * v;
-        const fy = -dragConstant * newVy * v;
-        const ax = fx / params.mass;
-        const ay = -params.gravity + (fy / params.mass);
-        newVx += ax * dt;
-        newVy += ay * dt;
-      } else {
-        newVy -= params.gravity * dt;
+    // Find the current position in the pre-calculated trajectory
+    let currentPoint = trajPoints[trajPoints.length - 1];
+    let hasFinished = true;
+  
+    for (let i = 0; i < trajPoints.length - 1; i++) {
+      const p1 = trajPoints[i];
+      const p2 = trajPoints[i+1];
+      if (simulationTime.current >= p1.t! && simulationTime.current < p2.t!) {
+        const t = (simulationTime.current - p1.t!) / (p2.t! - p1.t!);
+        currentPoint = {
+          x: p1.x + (p2.x - p1.x) * t,
+          y: p1.y + (p2.y - p1.y) * t,
+        };
+        hasFinished = false;
+        break;
       }
-      
-      setBallVelocity({ x: newVx, y: newVy });
-      
-      const newPos = {
-        x: prevPos.x + newVx * dt,
-        y: prevPos.y + newVy * dt,
-      };
+    }
 
-      if (newPos.y < 0 && prevPos.y >= 0) {
-        
-        const t = -prevPos.y / (newPos.y - prevPos.y); // Interpolation factor
-        const finalX = prevPos.x + (newPos.x - prevPos.x) * t;
-
-        const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
-        simulationTime.current += (dt * t);
-        
-        landSfxRef.current?.play().catch(console.error);
-
-        setStats(prev => ({
-          ...prev,
-          flightTime: simulationTime.current,
-          horizontalDistance: finalX,
-          impactSpeed: impactSpeed
-        }));
-        setTrajectory(prevTraj => [...prevTraj, {x: finalX, y: 0}]);
-        setBallPosition({x: finalX, y: 0});
-        
-        setStatus('finished');
-        
-        return {x: finalX, y: 0};
-      }
-      
-      if (newPos.y >= 0) {
-        setTrajectory(prevTraj => [...prevTraj, newPos]);
-        simulationTime.current += dt;
-        setStats(prevStats => {
-          const isNewMaxHeight = newPos.y > prevStats.maxHeight;
-          return {
-            ...prevStats,
-            maxHeight: isNewMaxHeight ? newPos.y : prevStats.maxHeight,
-            maxHeightPoint: isNewMaxHeight ? newPos : prevStats.maxHeightPoint,
-            flightTime: simulationTime.current,
-            horizontalDistance: newPos.x,
-          };
-        });
-        return newPos;
-      }
-      
-      return prevPos;
-    });
-
-    animationFrameId.current = requestAnimationFrame(simulationLoop);
-  }, [params, isSlowMotion]);
+    setBallPosition(currentPoint);
+    
+    const visibleTrajectory = trajPoints.filter(p => p.t! <= simulationTime.current);
+    if(visibleTrajectory.length > 0 && JSON.stringify(visibleTrajectory[visibleTrajectory.length -1]) !== JSON.stringify(currentPoint)) {
+        visibleTrajectory.push(currentPoint);
+    }
+    setTrajectory(visibleTrajectory);
+  
+    if (hasFinished) {
+      landSfxRef.current?.play().catch(console.error);
+      setStats(finalStats);
+      setStatus('finished');
+      setBallPosition(currentPoint); // Ensure final position is set
+    } else {
+      animationFrameId.current = requestAnimationFrame(simulationLoop);
+    }
+  }, [isSlowMotion]);
 
   useEffect(() => {
     if (status === 'flying') {
@@ -221,15 +167,11 @@ export default function GolfSimulator() {
     
     // Use a callback with setStatus to guarantee order of operations
     setStatus(() => {
-      const angleRad = (params.angle * Math.PI) / 180;
-      const launchSpeed = params.initialVelocity;
-      const v0x = launchSpeed * Math.cos(angleRad);
-      const v0y = launchSpeed * Math.sin(angleRad);
-      
-      setBallPosition({ x: 0, y: 0 });
-      setBallVelocity({ x: v0x, y: v0y });
-      setTrajectory([{ x: 0, y: 0 }]);
-      setStats({ ...initialStats, launchSpeed });
+      // Pre-calculate the entire trajectory and stats
+      const result = calculateTrajectory(params);
+      trajectoryData.current = result;
+
+      setStats({ ...initialStats, launchSpeed: params.initialVelocity });
       
       swingSfxRef.current?.play().catch(console.error);
       
@@ -495,3 +437,5 @@ export default function GolfSimulator() {
     </div>
   );
 }
+
+    

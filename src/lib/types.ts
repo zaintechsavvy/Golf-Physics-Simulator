@@ -22,4 +22,7 @@ export interface SimulationStats {
 export type Point = {
   x: number;
   y: number;
+  t?: number; // Optional time property
 };
+
+    
