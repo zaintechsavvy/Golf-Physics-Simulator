@@ -31,6 +31,53 @@ const initialStats: SimulationStats = {
   impactSpeed: 0,
 };
 
+type ViewBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+// Custom hook for smooth animation
+const useSmoothAnimation = (initialValue: number, duration = 500, easing = (t: number) => t) => {
+  const [currentValue, setCurrentValue] = useState(initialValue);
+  const targetValueRef = useRef(initialValue);
+  const animationFrameRef = useRef<number>();
+
+  const setValue = useCallback((newValue: number) => {
+    targetValueRef.current = newValue;
+    const startTime = performance.now();
+
+    const animate = (now: number) => {
+      const elapsedTime = now - startTime;
+      const progress = Math.min(elapsedTime / duration, 1);
+      const easedProgress = easing(progress);
+
+      setCurrentValue(prev => prev + (targetValueRef.current - prev) * easedProgress);
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [duration, easing]);
+
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  return [currentValue, setValue] as const;
+};
+
+
 export default function GolfSimulator() {
   const [params, setParams] = useState<PhysicsState>(initialPhysicsState);
   const [status, setStatus] = useState<SimulationStatus>('idle');
@@ -41,9 +88,11 @@ export default function GolfSimulator() {
   const [stats, setStats] = useState<SimulationStats>(initialStats);
   const [zoom, setZoom] = useState(0.8);
   const [isSlowMotion, setSlowMotion] = useState(false);
+  
+  const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
+  const animationFrameId = useRef<number>();
 
   const lastFrameTime = useRef<number>(performance.now());
-  const animationFrameId = useRef<number>();
   const simulationTime = useRef(0);
   const isSwinging = useRef(false);
 
@@ -63,7 +112,6 @@ export default function GolfSimulator() {
   };
 
   useEffect(() => {
-    // Recalculate aiming arc when params change and not simulating
     if (status === 'idle' || status === 'finished') {
       const angleRad = (params.angle * Math.PI) / 180;
       const v0x = params.initialVelocity * Math.cos(angleRad);
@@ -170,30 +218,109 @@ export default function GolfSimulator() {
   const handleClearPath = () => setTrajectory([ballPosition]);
 
   // --- CAMERA LOGIC ---
-  let viewBox: string;
+  const getIdleView = (): ViewBox => ({
+    x: -COURSE_WIDTH / 4,
+    y: -COURSE_HEIGHT / 2,
+    width: COURSE_WIDTH / zoom,
+    height: COURSE_HEIGHT / zoom,
+  });
 
-  if (status === 'finished' && stats.horizontalDistance > 0) {
-    // Zoom out to show the whole shot
+  const getFlyingView = (): ViewBox => ({
+    x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
+    y: - (COURSE_HEIGHT / zoom / 2) - ballPosition.y * PIXELS_PER_METER,
+    width: COURSE_WIDTH / zoom,
+    height: COURSE_HEIGHT / zoom,
+  });
+
+  const getFinishedView = (): ViewBox => {
     const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 200;
-    const totalHeight = totalWidth * (COURSE_HEIGHT / COURSE_WIDTH);
-    const viewboxX = -100;
-    const viewboxY = -totalHeight + (COURSE_HEIGHT - 50); // Show a bit of sky
-    viewBox = `${viewboxX} ${viewboxY} ${totalWidth} ${totalHeight}`;
-  } else {
-    // Follow the ball or stay at the start
-    const ballSvgY = (COURSE_HEIGHT - 50) - (ballPosition.y * PIXELS_PER_METER);
-    let viewboxX: number;
-    let viewboxY: number;
+    const maxHeightPixels = stats.maxHeight * PIXELS_PER_METER;
+    
+    // Calculate aspect ratio of the course view
+    const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
+    
+    // Determine the required height to fit the width, respecting aspect ratio.
+    let totalHeight = totalWidth / courseAspectRatio;
 
-    if (status === 'idle') {
-      viewboxX = -COURSE_WIDTH / 2 + 50;
-      viewboxY = 0;
-    } else {
-      viewboxX = ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50;
-      viewboxY = ballSvgY - (COURSE_HEIGHT / zoom / 2);
+    // Ensure the max height of the trajectory is visible. Add some padding.
+    totalHeight = Math.max(totalHeight, maxHeightPixels + 200);
+
+    // Center the view vertically, showing ground.
+    const yOffset = -totalHeight + COURSE_HEIGHT - 50;
+
+    return {
+      x: -100,
+      y: yOffset,
+      width: totalWidth,
+      height: totalHeight,
+    };
+  };
+  
+  // Custom animation logic
+  const targetViewRef = useRef<ViewBox>(getIdleView());
+  const cameraAnimationRef = useRef<number>();
+
+  useEffect(() => {
+    const newTargetView = (() => {
+      switch (status) {
+        case 'finished':
+          return getFinishedView();
+        case 'flying':
+        case 'paused':
+          return getFlyingView();
+        case 'idle':
+        default:
+          return getIdleView();
+      }
+    })();
+    targetViewRef.current = newTargetView;
+
+    const animateCamera = () => {
+      setViewBox(currentView => {
+        const target = targetViewRef.current;
+        const easing = 0.08;
+        
+        const dx = (target.x - currentView.x) * easing;
+        const dy = (target.y - currentView.y) * easing;
+        const dw = (target.width - currentView.width) * easing;
+        const dh = (target.height - currentView.height) * easing;
+
+        // If the change is negligible, stop animating
+        if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(dw) < 0.1 && Math.abs(dh) < 0.1) {
+          if (cameraAnimationRef.current) cancelAnimationFrame(cameraAnimationRef.current);
+          return target;
+        }
+
+        return {
+          x: currentView.x + dx,
+          y: currentView.y + dy,
+          width: currentView.width + dw,
+          height: currentView.height + dh,
+        };
+      });
+      cameraAnimationRef.current = requestAnimationFrame(animateCamera);
+    };
+
+    if (cameraAnimationRef.current) {
+      cancelAnimationFrame(cameraAnimationRef.current);
     }
-    viewBox = `${viewboxX} ${viewboxY} ${COURSE_WIDTH / zoom} ${COURSE_HEIGHT / zoom}`;
-  }
+    cameraAnimationRef.current = requestAnimationFrame(animateCamera);
+
+    return () => {
+      if (cameraAnimationRef.current) {
+        cancelAnimationFrame(cameraAnimationRef.current);
+      }
+    };
+  }, [status, ballPosition, stats, zoom]); // Rerun effect when these change
+  
+  useEffect(() => {
+    // Immediate jump on reset
+    if (status === 'idle') {
+      if (cameraAnimationRef.current) cancelAnimationFrame(cameraAnimationRef.current);
+      setViewBox(getIdleView());
+    }
+  }, [status, zoom]);
+
 
   return (
     <div className="w-screen h-screen overflow-hidden relative font-sans">
@@ -201,7 +328,7 @@ export default function GolfSimulator() {
         ballPosition={ballPosition}
         trajectory={trajectory}
         aimingArc={status === 'idle' || status === 'finished' ? aimingArc : []}
-        viewBox={viewBox}
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
         courseWidth={COURSE_WIDTH}
         courseHeight={COURSE_HEIGHT}
         pixelsPerMeter={PIXELS_PER_METER}
