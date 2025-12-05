@@ -57,7 +57,7 @@ export default function GolfCourse({
     >
       <defs>
         <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#87CEEB', stopOpacity: 1 }} />
+          <stop offset="0%" style={{ stopColor: '#4682B4', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'hsl(var(--background))', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
