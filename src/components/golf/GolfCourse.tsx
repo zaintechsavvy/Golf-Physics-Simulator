@@ -1,7 +1,7 @@
 'use client';
 
 import type { Point, SimulationStatus } from '@/lib/types';
-import { GolferIcon, GolfFlagIcon } from './icons';
+import { GolfClubIcon, GolfFlagIcon } from './icons';
 
 type GolfCourseProps = {
   ballPosition: Point;
@@ -14,6 +14,8 @@ type GolfCourseProps = {
   targetDistance: number;
   status: SimulationStatus;
   finalDistance: number;
+  launchAngle: number;
+  launchSpeed: number;
 };
 
 const TEE_X_OFFSET = 50;
@@ -28,7 +30,9 @@ export default function GolfCourse({
   pixelsPerMeter,
   targetDistance,
   status,
-  finalDistance
+  finalDistance,
+  launchAngle,
+  launchSpeed
 }: GolfCourseProps) {
   const groundY = courseHeight - 50;
 
@@ -86,10 +90,24 @@ export default function GolfCourse({
       {/* Ground */}
       <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
       
-      {/* Tee Box */}
-      <g transform={`translate(${TEE_X_OFFSET - 35}, ${groundY - 10})`}>
-        <GolferIcon />
+      {/* Golf Club */}
+      <g transform={`translate(${TEE_X_OFFSET - 10}, ${groundY})`}>
+        <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
+
+       {/* Force Display */}
+       {status === 'flying' && (
+        <text 
+          x={TEE_X_OFFSET + 20} 
+          y={groundY - 10} 
+          fontSize="14" 
+          fill="white" 
+          textAnchor="start"
+          className="font-semibold"
+        >
+          {launchSpeed.toFixed(1)} m/s
+        </text>
+      )}
       
       {/* Target Flag */}
       <g transform={`translate(${targetDistance * pixelsPerMeter + TEE_X_OFFSET - 10}, ${groundY - 75})`}>
@@ -159,7 +177,11 @@ export default function GolfCourse({
       )}
       
       {/* Ball */}
-      <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
+      {status !== 'flying' && status !== 'paused' ? (
+        <circle cx={TEE_X_OFFSET} cy={groundY - 2} r="5" fill="white" stroke="black" strokeWidth="0.5" />
+      ) : (
+        <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
+      )}
     </svg>
   );
 }

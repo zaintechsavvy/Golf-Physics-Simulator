@@ -61,8 +61,8 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
         <SliderControl
           label="Initial Velocity"
           value={params.initialVelocity}
-          min={0}
-          max={50}
+          min={1}
+          max={70}
           step={1}
           unit="m/s"
           onChange={(v) => onParamChange({ initialVelocity: v })}

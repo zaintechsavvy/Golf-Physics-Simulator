@@ -1,19 +1,37 @@
 import type { SVGProps } from 'react';
+import type { SimulationStatus } from '@/lib/types';
 
-export function GolferIcon(props: SVGProps<SVGSVGElement>) {
+export function GolfClubIcon({ swingState, launchAngle }: { swingState: SimulationStatus, launchAngle: number }) {
+  const clubRotation = -launchAngle;
+  let animationClass = '';
+
+  if (swingState === 'flying') {
+    animationClass = 'swing-animation';
+  }
+  
   return (
     <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="40"
-      height="80"
-      viewBox="0 0 40 80"
-      fill="currentColor"
-      {...props}
+      width="100"
+      height="100"
+      viewBox="-20 -90 100 100"
+      className="overflow-visible"
     >
-      <circle cx="20" cy="10" r="8" />
-      <path d="M20,18 L20,55 Q20,70 10,75" stroke="currentColor" strokeWidth="6" fill="none" />
-      <path d="M20,55 Q20,70 30,75" stroke="currentColor" strokeWidth="6" fill="none" />
-      <path d="M20,25 L5,40" stroke="currentColor" strokeWidth="6" fill="none" />
+      <g 
+        className={animationClass} 
+        style={{ transformOrigin: '0px -10px', transform: `rotate(${clubRotation}deg)` }}
+      >
+        {/* Shaft */}
+        <rect x="-2.5" y="-80" width="5" height="75" fill="#C0C0C0" />
+        {/* Grip */}
+        <rect x="-4" y="-85" width="8" height="15" rx="2" fill="#333" />
+        {/* Club Head */}
+        <path
+          d="M -15, -5 L 15, -5 L 20, -15 L -10, -15 Z"
+          fill="#A9A9A9"
+          stroke="#555"
+          strokeWidth="1"
+        />
+      </g>
     </svg>
   );
 }

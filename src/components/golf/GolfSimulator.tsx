@@ -143,7 +143,6 @@ export default function GolfSimulator() {
       };
 
       if (newPos.y < 0 && prevPos.y >= 0) {
-        setStatus('finished');
         
         const t = -prevPos.y / (newPos.y - prevPos.y); // Interpolation factor
         const finalX = prevPos.x + (newPos.x - prevPos.x) * t;
@@ -158,6 +157,10 @@ export default function GolfSimulator() {
           impactSpeed: impactSpeed
         }));
         setTrajectory(prevTraj => [...prevTraj, {x: finalX, y: 0}]);
+        setBallPosition({x: finalX, y: 0});
+        
+        setStatus('finished');
+        
         return {x: finalX, y: 0};
       }
       
@@ -199,8 +202,8 @@ export default function GolfSimulator() {
  const handleSwing = () => {
     resetSimulation();
     
-    // Use a callback with setTrajectory to ensure it's reset before starting
-    setTrajectory(() => {
+    // Use a callback with setStatus to guarantee order of operations
+    setStatus(() => {
       const angleRad = (params.angle * Math.PI) / 180;
       const launchSpeed = params.initialVelocity;
       const v0x = launchSpeed * Math.cos(angleRad);
@@ -208,10 +211,10 @@ export default function GolfSimulator() {
       
       setBallPosition({ x: 0, y: 0 });
       setBallVelocity({ x: v0x, y: v0y });
+      setTrajectory([{ x: 0, y: 0 }]);
       setStats({ ...initialStats, launchSpeed });
-      setStatus('flying');
       
-      return [{ x: 0, y: 0 }];
+      return 'flying';
     });
   };
 
@@ -222,9 +225,9 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * zoom + 400,
-    width: COURSE_WIDTH / zoom,
-    height: COURSE_HEIGHT / zoom,
+    y: -COURSE_HEIGHT * 0.9 + 400, // Lower the camera
+    width: COURSE_WIDTH / 0.7, // Zoom out more
+    height: COURSE_HEIGHT / 0.7,
   });
 
   const getFlyingView = (): ViewBox => ({
@@ -243,7 +246,7 @@ export default function GolfSimulator() {
     requiredHeight = Math.max(requiredHeight, maxHeightPixels + 200); // Add vertical padding
   
     // Center the view vertically on the trajectory, but biased towards the ground
-    const yOffset = -requiredHeight + maxHeightPixels / 2 + (COURSE_HEIGHT - 50);
+    const yOffset = -requiredHeight + (COURSE_HEIGHT - 50) + (requiredHeight - maxHeightPixels) / 2 - 100;
   
     return {
       x: -150, // Start a bit before the tee
@@ -337,6 +340,8 @@ export default function GolfSimulator() {
         targetDistance={TARGET_DISTANCE}
         status={status}
         finalDistance={stats.horizontalDistance}
+        launchAngle={params.angle}
+        launchSpeed={params.initialVelocity}
       />
       <DataOverlay stats={stats} status={status} />
       <AngleControl

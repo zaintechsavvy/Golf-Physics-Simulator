@@ -1,0 +1,18 @@
+.swing-animation {
+  animation: club-swing 0.5s ease-in-out forwards;
+}
+
+@keyframes club-swing {
+  0% {
+    transform: rotate(20deg);
+  }
+  40% {
+    transform: rotate(-130deg);
+  }
+  80% {
+    transform: rotate(var(--final-rotation, -45deg));
+  }
+  100% {
+    transform: rotate(var(--final-rotation, -45deg));
+  }
+}
