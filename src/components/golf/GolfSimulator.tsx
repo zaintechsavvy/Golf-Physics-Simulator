@@ -53,6 +53,9 @@ export default function GolfSimulator() {
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
   const animationFrameId = useRef<number>();
 
+  const swingSfxRef = useRef<HTMLAudioElement>(null);
+  const landSfxRef = useRef<HTMLAudioElement>(null);
+
   const lastFrameTime = useRef<number>(performance.now());
   const simulationTime = useRef(0);
 
@@ -149,6 +152,8 @@ export default function GolfSimulator() {
 
         const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
         simulationTime.current += (dt * t);
+        
+        landSfxRef.current?.play().catch(console.error);
 
         setStats(prev => ({
           ...prev,
@@ -213,6 +218,8 @@ export default function GolfSimulator() {
       setBallVelocity({ x: v0x, y: v0y });
       setTrajectory([{ x: 0, y: 0 }]);
       setStats({ ...initialStats, launchSpeed });
+      
+      swingSfxRef.current?.play().catch(console.error);
       
       return 'flying';
     });
@@ -329,6 +336,9 @@ export default function GolfSimulator() {
 
   return (
     <div className="w-screen h-screen overflow-hidden relative font-sans">
+      <audio ref={swingSfxRef} src="https://cdn.freesound.org/previews/341/341629_5824896-lq.mp3" preload="auto" />
+      <audio ref={landSfxRef} src="https://cdn.freesound.org/previews/511/511874_11157367-lq.mp3" preload="auto" />
+
       <GolfCourse
         ballPosition={ballPosition}
         trajectory={trajectory}
@@ -369,3 +379,5 @@ export default function GolfSimulator() {
     </div>
   );
 }
+
+    
