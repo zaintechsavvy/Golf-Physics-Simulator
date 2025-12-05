@@ -116,15 +116,18 @@ export default function GolfSimulator() {
     lastFrameTime.current = now;
 
     if (status !== 'flying') {
+      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+      animationFrameId.current = undefined;
       return;
     }
 
     const timeFactor = isSlowMotion ? 0.25 : 1.0;
     const dt = timeDelta * timeFactor;
-    simulationTime.current += dt;
     
-    setBallVelocity(prevVelocity => {
-      let { x: vx, y: vy } = prevVelocity;
+    let newPos: Point | null = null;
+
+    setBallPosition(prevPos => {
+      let { x: vx, y: vy } = ballVelocity;
       let newVx = vx;
       let newVy = vy;
 
@@ -142,40 +145,41 @@ export default function GolfSimulator() {
         newVy -= params.gravity * dt;
       }
 
-      setBallPosition(prevPos => {
-        const newPos = {
-          x: prevPos.x + newVx * dt,
-          y: prevPos.y + newVy * dt,
-        };
+      setBallVelocity({ x: newVx, y: newVy });
+      
+      newPos = {
+        x: prevPos.x + newVx * dt,
+        y: prevPos.y + newVy * dt,
+      };
 
-        if (newPos.y < 0) {
-            setStatus('finished');
-            const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
-            setStats(prev => ({
-              ...prev,
-              flightTime: simulationTime.current,
-              horizontalDistance: newPos.x,
-              impactSpeed: impactSpeed
-            }));
-            // Stop the loop
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-                animationFrameId.current = undefined;
-            }
-          return {x: newPos.x, y: 0}; // Land on ground
-        }
+      if (newPos.y < 0) {
+        setStatus('finished');
+        const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
+        simulationTime.current += dt;
+        setStats(prev => ({
+          ...prev,
+          flightTime: simulationTime.current,
+          horizontalDistance: (newPos as Point).x,
+          impactSpeed: impactSpeed
+        }));
         
-        setTrajectory(prevTraj => [...prevTraj, newPos]);
-        setStats(prevStats => ({ ...prevStats, maxHeight: Math.max(prevStats.maxHeight, newPos.y) }));
-        
-        return newPos;
-      });
-
-      return { x: newVx, y: newVy };
+        return {x: newPos.x, y: 0}; // Land on ground
+      }
+      
+      setTrajectory(prevTraj => [...prevTraj, (newPos as Point)]);
+      simulationTime.current += dt;
+      setStats(prevStats => ({ 
+        ...prevStats, 
+        maxHeight: Math.max(prevStats.maxHeight, (newPos as Point).y),
+        flightTime: simulationTime.current,
+        horizontalDistance: (newPos as Point).x,
+      }));
+      
+      return newPos;
     });
 
     animationFrameId.current = requestAnimationFrame(simulationLoop);
-  }, [params, isSlowMotion, status]);
+  }, [params, isSlowMotion, status, ballVelocity]);
 
 
   useEffect(() => {
@@ -217,14 +221,14 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -COURSE_WIDTH / 4,
-    y: -COURSE_HEIGHT / 2,
-    width: COURSE_WIDTH / zoom,
-    height: COURSE_HEIGHT / zoom,
+    y: 0, // Changed from -COURSE_HEIGHT / 2 to start lower
+    width: COURSE_WIDTH / zoom * 1.5, // Start slightly more zoomed out
+    height: COURSE_HEIGHT / zoom * 1.5,
   });
 
   const getFlyingView = (): ViewBox => ({
     x: ballPosition.x * PIXELS_PER_METER - (viewBox.width / 2) + 50,
-    y: - (viewBox.height / 2) - ballPosition.y * PIXELS_PER_METER,
+    y: (COURSE_HEIGHT / 2) - (viewBox.height / 2) - (ballPosition.y * PIXELS_PER_METER), // Center the ball vertically
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
@@ -350,3 +354,4 @@ export default function GolfSimulator() {
     </div>
   );
 }
+ 
