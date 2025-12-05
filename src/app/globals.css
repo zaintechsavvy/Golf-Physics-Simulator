@@ -69,15 +69,15 @@
 
 @keyframes club-swing {
   0% {
-    transform: rotate(20deg)
+    /* The animation starts from whatever angle the backswing is at */
+    transform: rotate(var(--backswing-rotation)); 
   }
   40% {
-    transform: rotate(-130deg);
-  }
-  80% {
-    transform: rotate(var(--final-rotation, -45deg));
+    /* Peak of the downswing */
+    transform: rotate(90deg);
   }
   100% {
-    transform: rotate(var(--final-rotation, -45deg));
+    /* Finish in the resting position */
+    transform: rotate(var(--final-rotation, 20deg));
   }
 }

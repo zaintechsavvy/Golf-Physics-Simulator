@@ -96,7 +96,7 @@ export default function GolfCourse({
       </g>
 
        {/* Force Display */}
-       {status === 'flying' && (
+       {status !== 'flying' && status !== 'paused' && (
         <text 
           x={TEE_X_OFFSET + 20} 
           y={groundY - 10} 
