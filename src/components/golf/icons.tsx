@@ -5,7 +5,21 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
   // Determine rotation based on state.
   // In idle, it shows the backswing based on launchAngle (counter-clockwise).
   // During/after flight, it rests.
-  const clubRotation = swingState === 'idle' ? launchAngle : 20;
+  const getClubRotation = () => {
+    switch (swingState) {
+      case 'idle':
+        return launchAngle;
+      case 'flying':
+        // During animation, the CSS class handles rotation.
+        // We set it to the final state to avoid a jump if the component re-renders.
+        return 20; 
+      case 'paused':
+      case 'finished':
+      default:
+        return 20; // Resting angle
+    }
+  };
+  const clubRotation = getClubRotation();
   
   let animationClass = '';
   // The --backswing-rotation CSS variable will be the starting angle for the swing.
@@ -30,7 +44,7 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
         className={animationClass} 
         style={{ 
           transformOrigin: '0px -80px', 
-          transform: `rotate(${clubRotation}deg)`,
+          transform: animationClass ? undefined : `rotate(${clubRotation}deg)`,
           ...animationStyle
         }}
       >
