@@ -8,8 +8,12 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
   const clubRotation = swingState === 'idle' ? -launchAngle : 20;
   
   let animationClass = '';
+  // The --backswing-rotation CSS variable will be the starting angle for the swing.
   // The --final-rotation CSS variable will be the resting angle after the swing.
-  const animationStyle = { '--final-rotation': '20deg' };
+  const animationStyle: React.CSSProperties = { 
+    '--backswing-rotation': `${-launchAngle}deg`,
+    '--final-rotation': '20deg' 
+  };
   
   if (swingState === 'flying') {
     animationClass = 'swing-animation';
