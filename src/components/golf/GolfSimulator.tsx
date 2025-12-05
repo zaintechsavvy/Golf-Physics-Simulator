@@ -206,14 +206,9 @@ export default function GolfSimulator() {
   }, [status, simulationLoop]);
   
   const handleSwing = () => {
-    if (animationFrameId.current) {
-      cancelAnimationFrame(animationFrameId.current);
-    }
-    
-    setBallPosition({ x: 0, y: 0 });
+    resetSimulation();
+
     setTrajectory([{ x: 0, y: 0 }]);
-    simulationTime.current = 0;
-    
     const angleRad = (params.angle * Math.PI) / 180;
     const launchSpeed = params.initialVelocity;
     const v0x = launchSpeed * Math.cos(angleRad);
@@ -230,15 +225,15 @@ export default function GolfSimulator() {
 
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
-    x: -COURSE_WIDTH / 6,
-    y: -COURSE_HEIGHT / 3,
+    x: -150,
+    y: -COURSE_HEIGHT / 2.5,
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
 
   const getFlyingView = (): ViewBox => ({
-    x: ballPosition.x * PIXELS_PER_METER - (viewBox.width / 2) + 50,
-    y: (COURSE_HEIGHT / 2) - (viewBox.height / 2) - (ballPosition.y * PIXELS_PER_METER),
+    x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
+    y: (COURSE_HEIGHT - 50) - (COURSE_HEIGHT / zoom / 2) - (ballPosition.y * PIXELS_PER_METER),
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
@@ -250,7 +245,7 @@ export default function GolfSimulator() {
     const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
     let totalHeight = totalWidth / courseAspectRatio;
     totalHeight = Math.max(totalHeight, maxHeightPixels + 200);
-    const yOffset = -totalHeight + COURSE_HEIGHT - 50;
+    const yOffset = -totalHeight + COURSE_HEIGHT - 100;
 
     return {
       x: -100,
@@ -315,6 +310,7 @@ export default function GolfSimulator() {
         cameraAnimationRef.current = undefined;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, ballPosition, stats, zoom]); 
   
   useEffect(() => {
@@ -325,6 +321,7 @@ export default function GolfSimulator() {
       }
       setViewBox(getIdleView());
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, zoom]);
 
 
