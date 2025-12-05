@@ -79,3 +79,22 @@ export function GolfFlagIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function LaunchArrowIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      width="80"
+      height="20"
+      viewBox="0 0 80 20"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      className="overflow-visible"
+      {...props}
+    >
+      <g transform="translate(0, 10)">
+        <path d="M0 0 L60 0" stroke="currentColor" strokeWidth="3" />
+        <path d="M75 0 L60 -7 L60 7 Z" fill="currentColor" />
+      </g>
+    </svg>
+  );
+}

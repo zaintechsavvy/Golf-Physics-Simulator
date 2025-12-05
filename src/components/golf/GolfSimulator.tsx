@@ -98,41 +98,46 @@ export default function GolfSimulator() {
   }, [params, status]);
   
   const simulationLoop = useCallback((now: number) => {
-    if (!trajectoryData.current) {
-      setStatus('finished');
-      return;
-    }
-  
+    if (status !== 'flying') return; // Ensure loop only runs when flying
+
     const timeDelta = (now - lastFrameTime.current) / 1000;
     lastFrameTime.current = now;
     
     const timeFactor = isSlowMotion ? 0.25 : 1.0;
     simulationTime.current += timeDelta * timeFactor;
   
-    const { trajectory: trajPoints, finalStats } = trajectoryData.current;
-    
-    // Find the current position in the pre-calculated trajectory
-    let currentPoint = trajPoints[trajPoints.length - 1];
-    let hasFinished = true;
-  
-    for (let i = 0; i < trajPoints.length - 1; i++) {
-      const p1 = trajPoints[i];
-      const p2 = trajPoints[i+1];
-      if (simulationTime.current >= p1.t! && simulationTime.current < p2.t!) {
-        const t = (simulationTime.current - p1.t!) / (p2.t! - p1.t!);
-        currentPoint = {
-          x: p1.x + (p2.x - p1.x) * t,
-          y: p1.y + (p2.y - p1.y) * t,
-        };
-        hasFinished = false;
-        break;
+    const { trajectory: trajPoints, finalStats } = trajectoryData.current!;
+    const totalFlightTime = finalStats.flightTime;
+
+    let currentPoint: Point;
+    let hasFinished = false;
+
+    if (simulationTime.current >= totalFlightTime) {
+      currentPoint = trajPoints[trajPoints.length - 1];
+      hasFinished = true;
+    } else {
+      // Find the current position in the pre-calculated trajectory by interpolating
+      for (let i = 0; i < trajPoints.length - 1; i++) {
+        const p1 = trajPoints[i];
+        const p2 = trajPoints[i + 1];
+        if (simulationTime.current >= p1.t! && simulationTime.current < p2.t!) {
+          const t = (simulationTime.current - p1.t!) / (p2.t! - p1.t!);
+          currentPoint = {
+            x: p1.x + (p2.x - p1.x) * t,
+            y: p1.y + (p2.y - p1.y) * t,
+          };
+          break;
+        }
       }
     }
-
+    
+    // @ts-ignore - currentPoint will be defined
     setBallPosition(currentPoint);
     
     const visibleTrajectory = trajPoints.filter(p => p.t! <= simulationTime.current);
-    if(visibleTrajectory.length > 0 && JSON.stringify(visibleTrajectory[visibleTrajectory.length -1]) !== JSON.stringify(currentPoint)) {
+    // @ts-ignore
+    if (visibleTrajectory.length > 0 && JSON.stringify(visibleTrajectory[visibleTrajectory.length - 1]) !== JSON.stringify(currentPoint)) {
+        // @ts-ignore
         visibleTrajectory.push(currentPoint);
     }
     setTrajectory(visibleTrajectory);
@@ -141,11 +146,14 @@ export default function GolfSimulator() {
       landSfxRef.current?.play().catch(console.error);
       setStats(finalStats);
       setStatus('finished');
+       // @ts-ignore
       setBallPosition(currentPoint); // Ensure final position is set
+      animationFrameId.current = undefined;
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
-  }, [isSlowMotion]);
+  }, [isSlowMotion, status]);
+
 
   useEffect(() => {
     if (status === 'flying') {
@@ -192,7 +200,7 @@ export default function GolfSimulator() {
     setIsSettingAngle(true);
   };
   
-  const handleAngleDragMove = (e: React.MouseEvent) => {
+  const handleAngleDragMove = useCallback((e: React.MouseEvent) => {
     if (!isSettingAngle) return;
     
     const svg = courseRef.current;
@@ -205,7 +213,7 @@ export default function GolfSimulator() {
     const transformedPoint = svgPoint.matrixTransform(svg.getScreenCTM()?.inverse());
 
     // Club's pivot point in SVG coordinates
-    const pivotX = 0;
+    const pivotX = 50;
     const pivotY = (COURSE_HEIGHT - 50);
     
     const dx = transformedPoint.x - pivotX;
@@ -218,11 +226,11 @@ export default function GolfSimulator() {
     angleDeg = Math.max(0, Math.min(90, angleDeg));
     
     handleParamChange({ angle: angleDeg });
-  };
+  }, [isSettingAngle]);
   
-  const handleAngleDragEnd = () => {
+  const handleAngleDragEnd = useCallback(() => {
     setIsSettingAngle(false);
-  };
+  }, []);
 
 
   // --- CAMERA DRAG LOGIC ---
@@ -232,7 +240,7 @@ export default function GolfSimulator() {
     lastDragPoint.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isSettingAngle) {
        handleAngleDragMove(e);
        return;
@@ -249,42 +257,42 @@ export default function GolfSimulator() {
     }));
     
     lastDragPoint.current = { x: e.clientX, y: e.clientY };
-  };
+  }, [isSettingAngle, isDragging, handleAngleDragMove, viewBox.width]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     if (isSettingAngle) {
       handleAngleDragEnd();
     }
     if (isDragging) {
       setIsDragging(false);
     }
-  };
+  }, [isSettingAngle, isDragging, handleAngleDragEnd]);
   
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (isSettingAngle) {
       handleAngleDragEnd();
     }
     if (isDragging) {
       setIsDragging(false);
     }
-  };
+  }, [isSettingAngle, isDragging, handleAngleDragEnd]);
 
   // --- CAMERA LOGIC ---
-  const getIdleView = (): ViewBox => ({
+  const getIdleView = useCallback((): ViewBox => ({
     x: -150,
     y: -COURSE_HEIGHT * 0.9 + 400, // Lower the camera
     width: COURSE_WIDTH / 0.7, // Zoom out more
     height: COURSE_HEIGHT / 0.7,
-  });
+  }), []);
 
-  const getFlyingView = (): ViewBox => ({
+  const getFlyingView = useCallback((): ViewBox => ({
     x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
     y: ballPosition.y * -PIXELS_PER_METER - (COURSE_HEIGHT / zoom / 2) + (COURSE_HEIGHT - 50),
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
-  });
+  }), [ballPosition, zoom]);
 
- const getFinishedView = (): ViewBox => {
+ const getFinishedView = useCallback((): ViewBox => {
     const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 300; // Add padding
     const maxHeightPixels = stats.maxHeight * PIXELS_PER_METER;
     const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
@@ -301,7 +309,7 @@ export default function GolfSimulator() {
       width: totalWidth,
       height: requiredHeight,
     };
-  };
+  }, [stats.horizontalDistance, stats.maxHeight]);
   
   const targetViewRef = useRef<ViewBox>(getIdleView());
   const cameraAnimationRef = useRef<number>();
@@ -364,8 +372,7 @@ export default function GolfSimulator() {
         cameraAnimationRef.current = undefined;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom, isDragging, isSettingAngle]); 
+  }, [status, getFinishedView, getFlyingView, getIdleView, isDragging, isSettingAngle]); 
   
   useEffect(() => {
     // This effect ensures that on the first load and on resets, the camera snaps to the idle position without animation.
@@ -376,8 +383,7 @@ export default function GolfSimulator() {
       }
       setViewBox(getIdleView());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, getIdleView]);
 
 
   return (

@@ -1,7 +1,7 @@
 'use client';
-import { forwardRef } from 'react';
+import { forwardRef, memo } from 'react';
 import type { Point, SimulationStats, SimulationStatus } from '@/lib/types';
-import { GolfClubIcon, GolfFlagIcon } from './icons';
+import { GolfClubIcon, GolfFlagIcon, LaunchArrowIcon } from './icons';
 
 type GolfCourseProps = {
   ballPosition: Point;
@@ -94,12 +94,17 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       {/* Ground */}
       <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
       
-      {/* Golf Club */}
-      <g 
-        transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`} 
+      {/* Launch Arrow */}
+       <g 
+        transform={`translate(${TEE_X_OFFSET}, ${groundY}) rotate(${-launchAngle})`} 
         onMouseDown={onAngleDragStart}
         className={(status === 'idle' || status === 'finished') ? 'cursor-grab active:cursor-grabbing' : ''}
       >
+        <LaunchArrowIcon />
+      </g>
+      
+      {/* Golf Club */}
+      <g transform={`translate(${TEE_X_OFFSET}, ${groundY})`}>
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
@@ -224,4 +229,4 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 });
 GolfCourse.displayName = 'GolfCourse';
 
-export default GolfCourse;
+export default memo(GolfCourse);
