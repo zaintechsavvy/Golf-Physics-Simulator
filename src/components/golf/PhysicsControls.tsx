@@ -53,7 +53,7 @@ const SliderControl = ({
 
 export default function PhysicsControls({ params, onParamChange, isSimulating }: PhysicsControlsProps) {
   return (
-    <Card className="absolute top-4 right-4 z-10 w-80 shadow-lg bg-card/80 backdrop-blur-sm">
+    <Card className="w-80 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>Physics Controls</CardTitle>
       </CardHeader>

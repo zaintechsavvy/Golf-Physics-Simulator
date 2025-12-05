@@ -16,7 +16,7 @@ const COURSE_HEIGHT = 800;
 const TARGET_DISTANCE = 350; // meters
 
 const initialPhysicsState: PhysicsState = {
-  angle: 0,
+  angle: 45,
   initialVelocity: 40,
   gravity: G_CONSTANT,
   mass: 0.0459, // Standard golf ball mass in kg
@@ -468,11 +468,18 @@ export default function GolfSimulator() {
         onAngleDragStart={handleAngleDragStart}
       />
       <DataOverlay stats={stats} status={status} />
-      <PhysicsControls
-        params={params}
-        onParamChange={handleParamChange}
-        isSimulating={status === 'flying' || status === 'paused'}
-      />
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-4">
+        <PhysicsControls
+          params={params}
+          onParamChange={handleParamChange}
+          isSimulating={status === 'flying' || status === 'paused'}
+        />
+        <AngleControl
+          angle={params.angle}
+          onAngleChange={(angle) => handleParamChange({ angle })}
+          disabled={status === 'flying' || status === 'paused'}
+        />
+      </div>
       <SimulationControls
         status={status}
         isSlowMotion={isSlowMotion}
@@ -484,11 +491,6 @@ export default function GolfSimulator() {
         onZoomIn={() => setZoom(z => Math.min(z * 1.2, 5))}
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
         onToggleSlowMotion={() => setSlowMotion(s => !s)}
-      />
-       <AngleControl
-        angle={params.angle}
-        onAngleChange={(angle) => handleParamChange({ angle })}
-        disabled={status === 'flying' || status === 'paused'}
       />
     </div>
   );
