@@ -6,6 +6,7 @@ import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
 import GolfCourse from './GolfCourse';
 import { cn } from '@/lib/utils';
+import AngleControl from './AngleControl';
 
 const G_CONSTANT = 9.80665; // standard gravity
 const AIR_DENSITY = 1.225; // kg/m^3
@@ -260,15 +261,14 @@ export default function GolfSimulator() {
     const transformedPoint = svgPoint.matrixTransform(svg.getScreenCTM()?.inverse());
 
     // Club's pivot point in SVG coordinates
-    const pivotX = 50 - 45;
-    const pivotY = (COURSE_HEIGHT - 50) - 80;
+    const pivotX = 0;
+    const pivotY = (COURSE_HEIGHT - 50);
     
     const dx = transformedPoint.x - pivotX;
-    const dy = transformedPoint.y - pivotY;
+    const dy = pivotY - transformedPoint.y; // Y is inverted in SVG
     
     let angleRad = Math.atan2(dy, dx);
-    // Convert to degrees and adjust so 0 is horizontal
-    let angleDeg = angleRad * (180 / Math.PI) + 90;
+    let angleDeg = angleRad * (180 / Math.PI);
     
     // Clamp the angle between 0 and 90
     angleDeg = Math.max(0, Math.min(90, angleDeg));
@@ -440,7 +440,7 @@ export default function GolfSimulator() {
     <div 
       className={cn(
         "w-screen h-screen overflow-hidden relative font-sans",
-        isDragging ? 'cursor-grabbing' : (isSettingAngle ? 'cursor-grabbing' : 'cursor-grab')
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
       )}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -484,6 +484,11 @@ export default function GolfSimulator() {
         onZoomIn={() => setZoom(z => Math.min(z * 1.2, 5))}
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
         onToggleSlowMotion={() => setSlowMotion(s => !s)}
+      />
+       <AngleControl
+        angle={params.angle}
+        onAngleChange={(angle) => handleParamChange({ angle })}
+        disabled={status === 'flying' || status === 'paused'}
       />
     </div>
   );
