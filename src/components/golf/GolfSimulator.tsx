@@ -46,7 +46,7 @@ export default function GolfSimulator() {
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.8);
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
@@ -154,8 +154,8 @@ export default function GolfSimulator() {
       if (newPos.y < 0 && prevPos.y >= 0) {
         setStatus('finished');
         
-        const t = -prevPos.y / newVy;
-        const finalX = prevPos.x + newVx * t;
+        const t = -prevPos.y / (newPos.y - prevPos.y); // Interpolation factor
+        const finalX = prevPos.x + (newPos.x - prevPos.x) * t;
 
         const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
         simulationTime.current += (dt * t);
@@ -166,7 +166,7 @@ export default function GolfSimulator() {
           horizontalDistance: finalX,
           impactSpeed: impactSpeed
         }));
-        
+        setTrajectory(prevTraj => [...prevTraj, {x: finalX, y: 0}]);
         return {x: finalX, y: 0};
       }
       
@@ -207,16 +207,21 @@ export default function GolfSimulator() {
   
   const handleSwing = () => {
     resetSimulation();
-
-    setTrajectory([{ x: 0, y: 0 }]);
-    const angleRad = (params.angle * Math.PI) / 180;
-    const launchSpeed = params.initialVelocity;
-    const v0x = launchSpeed * Math.cos(angleRad);
-    const v0y = launchSpeed * Math.sin(angleRad);
     
-    setBallVelocity({ x: v0x, y: v0y });
-    setStats({ ...initialStats, launchSpeed });
-    setStatus('flying');
+    // Use a callback with setTrajectory to ensure it's reset before starting
+    setTrajectory(() => {
+      const angleRad = (params.angle * Math.PI) / 180;
+      const launchSpeed = params.initialVelocity;
+      const v0x = launchSpeed * Math.cos(angleRad);
+      const v0y = launchSpeed * Math.sin(angleRad);
+      
+      setBallPosition({ x: 0, y: 0 });
+      setBallVelocity({ x: v0x, y: v0y });
+      setStats({ ...initialStats, launchSpeed });
+      setStatus('flying');
+      
+      return [{ x: 0, y: 0 }];
+    });
   };
 
   const handlePause = () => setStatus('paused');
@@ -233,25 +238,30 @@ export default function GolfSimulator() {
 
   const getFlyingView = (): ViewBox => ({
     x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
-    y: (COURSE_HEIGHT - 50) - (COURSE_HEIGHT / zoom / 2) - (ballPosition.y * PIXELS_PER_METER),
+    y: -(COURSE_HEIGHT / zoom / 2) + (COURSE_HEIGHT - 50) - (ballPosition.y * PIXELS_PER_METER),
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
 
   const getFinishedView = (): ViewBox => {
-    const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 200;
+    const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 300; // Add padding
     const maxHeightPixels = stats.maxHeight * PIXELS_PER_METER;
-    
     const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
-    let totalHeight = totalWidth / courseAspectRatio;
-    totalHeight = Math.max(totalHeight, maxHeightPixels + 200);
-    const yOffset = -totalHeight + COURSE_HEIGHT - 100;
-
+  
+    // Determine the required height based on width and aspect ratio
+    let requiredHeight = totalWidth / courseAspectRatio;
+  
+    // Ensure the height is enough to show the max height of the trajectory
+    requiredHeight = Math.max(requiredHeight, maxHeightPixels + 200); // Add vertical padding
+  
+    // Center the view vertically on the trajectory
+    const yOffset = -requiredHeight / 2 + (maxHeightPixels / 2);
+  
     return {
-      x: -100,
+      x: -150, // Start a bit before the tee
       y: yOffset,
       width: totalWidth,
-      height: totalHeight,
+      height: requiredHeight,
     };
   };
   
