@@ -3,15 +3,15 @@ import type { SimulationStatus } from '@/lib/types';
 
 export function GolfClubIcon({ swingState, launchAngle }: { swingState: SimulationStatus, launchAngle: number }) {
   // Determine rotation based on state.
-  // In idle, it shows the backswing based on launchAngle.
+  // In idle, it shows the backswing based on launchAngle (counter-clockwise).
   // During/after flight, it rests.
-  const clubRotation = swingState === 'idle' ? -launchAngle : 20;
+  const clubRotation = swingState === 'idle' ? launchAngle : 20;
   
   let animationClass = '';
   // The --backswing-rotation CSS variable will be the starting angle for the swing.
   // The --final-rotation CSS variable will be the resting angle after the swing.
   const animationStyle: React.CSSProperties = { 
-    '--backswing-rotation': `${-launchAngle}deg`,
+    '--backswing-rotation': `${launchAngle}deg`,
     '--final-rotation': '20deg' 
   };
   
