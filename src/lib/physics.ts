@@ -37,9 +37,11 @@ function calculateAnalyticalTrajectory(params: PhysicsState): SimulationResult {
   const maxHeight = (v0y ** 2) / (2 * g);
   
   const timeToMaxHeight = v0y / g;
+  const horizontalDistanceToMaxHeight = v0x * timeToMaxHeight;
   const maxHeightPoint = {
-    x: v0x * timeToMaxHeight,
-    y: maxHeight
+    x: horizontalDistanceToMaxHeight,
+    y: maxHeight,
+    t: timeToMaxHeight,
   };
 
   const finalStats: SimulationStats = {
@@ -47,6 +49,8 @@ function calculateAnalyticalTrajectory(params: PhysicsState): SimulationResult {
     horizontalDistance,
     maxHeight,
     maxHeightPoint,
+    timeToMaxHeight,
+    horizontalDistanceToMaxHeight,
     launchSpeed: v0,
     impactSpeed: v0, // In ideal physics, impact speed equals launch speed
   };
@@ -80,7 +84,7 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
 
   const trajectory: Point[] = [{ x, y, t }];
   let maxHeight = 0;
-  let maxHeightPoint: Point | null = { x: 0, y: 0 };
+  let maxHeightPoint: Point | null = { x: 0, y: 0, t: 0 };
   
   const area = Math.PI * (params.diameter / 2) ** 2;
   const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
@@ -106,7 +110,7 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
 
     if (y > maxHeight) {
       maxHeight = y;
-      maxHeightPoint = { x, y };
+      maxHeightPoint = { x, y, t };
     }
     
     // Only add point if it's still in the air
@@ -127,6 +131,8 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
             horizontalDistance: finalX,
             maxHeight,
             maxHeightPoint,
+            timeToMaxHeight: maxHeightPoint.t || 0,
+            horizontalDistanceToMaxHeight: maxHeightPoint.x || 0,
             launchSpeed: params.initialVelocity,
             impactSpeed,
         };
@@ -141,11 +147,11 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
     horizontalDistance: x,
     maxHeight,
     maxHeightPoint,
+    timeToMaxHeight: maxHeightPoint.t || 0,
+    horizontalDistanceToMaxHeight: maxHeightPoint.x || 0,
     launchSpeed: params.initialVelocity,
     impactSpeed: Math.sqrt(vx**2 + vy**2),
   };
 
   return { trajectory, finalStats };
 }
-
-    

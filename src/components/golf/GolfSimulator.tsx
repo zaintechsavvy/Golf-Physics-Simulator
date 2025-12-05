@@ -29,6 +29,8 @@ const initialStats: SimulationStats = {
   horizontalDistance: 0,
   maxHeight: 0,
   maxHeightPoint: null,
+  timeToMaxHeight: 0,
+  horizontalDistanceToMaxHeight: 0,
   launchSpeed: 0,
   impactSpeed: 0,
 };
@@ -403,8 +405,7 @@ export default function GolfSimulator() {
         pixelsPerMeter={PIXELS_PER_METER}
         targetDistance={TARGET_DISTANCE}
         status={status}
-        finalDistance={stats.horizontalDistance}
-        maxHeightPoint={stats.maxHeightPoint}
+        finalStats={stats}
         launchAngle={params.angle}
         launchSpeed={params.initialVelocity}
         onAngleDragStart={handleAngleDragStart}
@@ -437,5 +438,3 @@ export default function GolfSimulator() {
     </div>
   );
 }
-
-    

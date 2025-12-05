@@ -15,6 +15,8 @@ export interface SimulationStats {
   horizontalDistance: number;
   maxHeight: number;
   maxHeightPoint: Point | null;
+  timeToMaxHeight: number;
+  horizontalDistanceToMaxHeight: number;
   launchSpeed: number;
   impactSpeed: number;
 }
@@ -24,5 +26,3 @@ export type Point = {
   y: number;
   t?: number; // Optional time property
 };
-
-    

@@ -1,6 +1,6 @@
 'use client';
 import { forwardRef } from 'react';
-import type { Point, SimulationStatus } from '@/lib/types';
+import type { Point, SimulationStats, SimulationStatus } from '@/lib/types';
 import { GolfClubIcon, GolfFlagIcon } from './icons';
 
 type GolfCourseProps = {
@@ -13,8 +13,7 @@ type GolfCourseProps = {
   pixelsPerMeter: number;
   targetDistance: number;
   status: SimulationStatus;
-  finalDistance: number;
-  maxHeightPoint: Point | null;
+  finalStats: SimulationStats;
   launchAngle: number;
   launchSpeed: number;
   onAngleDragStart: (e: React.MouseEvent) => void;
@@ -32,8 +31,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   pixelsPerMeter,
   targetDistance,
   status,
-  finalDistance,
-  maxHeightPoint,
+  finalStats,
   launchAngle,
   launchSpeed,
   onAngleDragStart,
@@ -50,7 +48,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   const svgBallPosition = worldToSvg(ballPosition);
   const svgTrajectory = trajectory.map(worldToSvg);
   const svgAimingArc = aimingArc.map(worldToSvg);
-  const svgMaxHeightPoint = maxHeightPoint ? worldToSvg(maxHeightPoint) : null;
+  const svgMaxHeightPoint = finalStats.maxHeightPoint ? worldToSvg(finalStats.maxHeightPoint) : null;
 
   const pathData = (points: Point[]) => {
     if (points.length === 0) return '';
@@ -60,7 +58,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   const trajectoryPathData = pathData(svgTrajectory);
   const aimingArcPathData = pathData(svgAimingArc);
   
-  const finalBallSvgX = finalDistance * pixelsPerMeter + TEE_X_OFFSET;
+  const finalBallSvgX = finalStats.horizontalDistance * pixelsPerMeter + TEE_X_OFFSET;
 
   return (
     <svg
@@ -148,16 +146,33 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
         />
       )}
 
-      {/* Apex point */}
-      {svgMaxHeightPoint && (
-        <circle
-          cx={svgMaxHeightPoint.x}
-          cy={svgMaxHeightPoint.y}
-          r="4"
-          fill="hsl(var(--accent))"
-          stroke="white"
-          strokeWidth="1"
-        />
+      {/* Apex point marker */}
+      {svgMaxHeightPoint && status === 'finished' && (
+        <>
+          <line
+            x1={svgMaxHeightPoint.x}
+            y1={svgMaxHeightPoint.y}
+            x2={svgMaxHeightPoint.x}
+            y2={groundY}
+            stroke="hsl(var(--accent))"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+          />
+           <circle
+            cx={svgMaxHeightPoint.x}
+            cy={svgMaxHeightPoint.y}
+            r="4"
+            fill="hsl(var(--accent))"
+            stroke="white"
+            strokeWidth="1"
+          />
+          <g transform={`translate(${svgMaxHeightPoint.x + 10}, ${svgMaxHeightPoint.y})`} className="text-accent-foreground">
+             <text y="0" fontSize="12" fontWeight="bold" fill="hsl(var(--accent))">Apex</text>
+             <text y="15" fontSize="12">Height: {finalStats.maxHeight.toFixed(1)}m</text>
+             <text y="30" fontSize="12">Time: {finalStats.timeToMaxHeight.toFixed(2)}s</text>
+             <text y="45" fontSize="12">Distance: {finalStats.horizontalDistanceToMaxHeight.toFixed(1)}m</text>
+          </g>
+        </>
       )}
 
       {/* Fading trajectory dots */}
@@ -173,7 +188,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       ))}
 
       {/* Distance line on finish */}
-      {status === 'finished' && finalDistance > 0 && (
+      {status === 'finished' && finalStats.horizontalDistance > 0 && (
         <g className="text-foreground">
           <line
             x1={TEE_X_OFFSET}
@@ -193,7 +208,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
             fontWeight="bold"
             fill="currentColor"
           >
-            {finalDistance.toFixed(2)}m
+            {finalStats.horizontalDistance.toFixed(2)}m
           </text>
         </g>
       )}
