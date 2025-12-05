@@ -55,12 +55,16 @@ export default function GolfSimulator() {
   const lastFrameTime = useRef<number>(performance.now());
   const simulationTime = useRef(0);
 
-  const resetSimulation = useCallback(() => {
+  const resetSimulation = useCallback((isNewSwing = false) => {
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
       animationFrameId.current = undefined;
     }
-    setStatus('idle');
+    
+    if (!isNewSwing) {
+       setStatus('idle');
+    }
+   
     setBallPosition({ x: 0, y: 0 });
     setBallVelocity({ x: 0, y: 0 });
     setTrajectory([]);
@@ -125,9 +129,15 @@ export default function GolfSimulator() {
     const dt = timeDelta * timeFactor;
     
     let newPos: Point | null = null;
+    let currentVelocity = {x: 0, y: 0};
+
+    setBallVelocity(prevVel => {
+      currentVelocity = prevVel;
+      return prevVel;
+    });
 
     setBallPosition(prevPos => {
-      let { x: vx, y: vy } = ballVelocity;
+      let { x: vx, y: vy } = currentVelocity;
       let newVx = vx;
       let newVy = vy;
 
@@ -152,34 +162,43 @@ export default function GolfSimulator() {
         y: prevPos.y + newVy * dt,
       };
 
-      if (newPos.y < 0) {
+      if (newPos.y < 0 && prevPos.y >= 0) {
         setStatus('finished');
+        
+        // Interpolate to find exact landing spot
+        const t = -prevPos.y / newVy;
+        const finalX = prevPos.x + newVx * t;
+
         const impactSpeed = Math.sqrt(newVx**2 + newVy**2);
-        simulationTime.current += dt;
+        simulationTime.current += (dt * t);
+
         setStats(prev => ({
           ...prev,
           flightTime: simulationTime.current,
-          horizontalDistance: (newPos as Point).x,
+          horizontalDistance: finalX,
           impactSpeed: impactSpeed
         }));
         
-        return {x: newPos.x, y: 0}; // Land on ground
+        return {x: finalX, y: 0}; // Land on ground
       }
       
-      setTrajectory(prevTraj => [...prevTraj, (newPos as Point)]);
-      simulationTime.current += dt;
-      setStats(prevStats => ({ 
-        ...prevStats, 
-        maxHeight: Math.max(prevStats.maxHeight, (newPos as Point).y),
-        flightTime: simulationTime.current,
-        horizontalDistance: (newPos as Point).x,
-      }));
+      if (newPos.y >= 0) {
+        setTrajectory(prevTraj => [...prevTraj, (newPos as Point)]);
+        simulationTime.current += dt;
+        setStats(prevStats => ({ 
+          ...prevStats, 
+          maxHeight: Math.max(prevStats.maxHeight, (newPos as Point).y),
+          flightTime: simulationTime.current,
+          horizontalDistance: (newPos as Point).x,
+        }));
+        return newPos;
+      }
       
-      return newPos;
+      return prevPos; // If for some reason newPos.y is < 0 but we didn't land.
     });
 
     animationFrameId.current = requestAnimationFrame(simulationLoop);
-  }, [params, isSlowMotion, status, ballVelocity]);
+  }, [params, isSlowMotion, status]);
 
 
   useEffect(() => {
@@ -202,16 +221,20 @@ export default function GolfSimulator() {
   }, [status, simulationLoop]);
   
   const handleSwing = () => {
-    resetSimulation();
-    const angleRad = (params.angle * Math.PI) / 180;
-    const launchSpeed = params.initialVelocity;
-    const v0x = launchSpeed * Math.cos(angleRad);
-    const v0y = launchSpeed * Math.sin(angleRad);
+    resetSimulation(true); // pass true to indicate it's a new swing
     
-    setBallVelocity({ x: v0x, y: v0y });
-    setStats({ ...initialStats, launchSpeed });
-    setTrajectory([{ x: 0, y: 0 }]);
-    setStatus('flying');
+    // Defer state updates until after reset has cleared everything
+    setTimeout(() => {
+      const angleRad = (params.angle * Math.PI) / 180;
+      const launchSpeed = params.initialVelocity;
+      const v0x = launchSpeed * Math.cos(angleRad);
+      const v0y = launchSpeed * Math.sin(angleRad);
+      
+      setBallVelocity({ x: v0x, y: v0y });
+      setStats({ ...initialStats, launchSpeed });
+      setTrajectory([{ x: 0, y: 0 }]);
+      setStatus('flying');
+    }, 0);
   };
 
   const handlePause = () => setStatus('paused');
@@ -221,8 +244,8 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -COURSE_WIDTH / 4,
-    y: 0, // Changed from -COURSE_HEIGHT / 2 to start lower
-    width: COURSE_WIDTH / zoom * 1.5, // Start slightly more zoomed out
+    y: -COURSE_HEIGHT / 2.5,
+    width: COURSE_WIDTH / zoom * 1.5,
     height: COURSE_HEIGHT / zoom * 1.5,
   });
 
@@ -345,7 +368,7 @@ export default function GolfSimulator() {
         onSwing={handleSwing}
         onPause={handlePause}
         onPlay={handlePlay}
-        onReset={resetSimulation}
+        onReset={() => resetSimulation(false)}
         onClearPath={handleClearPath}
         onZoomIn={() => setZoom(z => Math.min(z * 1.2, 5))}
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
@@ -355,3 +378,5 @@ export default function GolfSimulator() {
   );
 }
  
+
+    
