@@ -379,5 +379,3 @@ export default function GolfSimulator() {
     </div>
   );
 }
-
-    
