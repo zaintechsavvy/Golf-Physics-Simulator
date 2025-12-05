@@ -6,6 +6,7 @@ import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
 import GolfCourse from './GolfCourse';
 import AngleControl from './AngleControl';
+import { cn } from '@/lib/utils';
 
 const G_CONSTANT = 9.80665; // standard gravity
 const AIR_DENSITY = 1.225; // kg/m^3
@@ -50,6 +51,9 @@ export default function GolfSimulator() {
   const [stats, setStats] = useState<SimulationStats>(initialStats);
   const [zoom, setZoom] = useState(0.8);
   const [isSlowMotion, setSlowMotion] = useState(false);
+  
+  const [isDragging, setIsDragging] = useState(false);
+  const lastDragPoint = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
   const animationFrameId = useRef<number>();
@@ -234,6 +238,36 @@ export default function GolfSimulator() {
   const handlePlay = () => setStatus('flying');
   const handleClearPath = () => setTrajectory([ballPosition]);
 
+  // --- CAMERA DRAG LOGIC ---
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return; // Only allow left-click dragging
+    setIsDragging(true);
+    lastDragPoint.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const scale = viewBox.width / COURSE_WIDTH;
+    const dx = e.clientX - lastDragPoint.current.x;
+    const dy = e.clientY - lastDragPoint.current.y;
+    
+    setViewBox(prev => ({
+      ...prev,
+      x: prev.x - dx * scale,
+      y: prev.y - dy * scale,
+    }));
+    
+    lastDragPoint.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -150,
@@ -272,6 +306,12 @@ export default function GolfSimulator() {
   const cameraAnimationRef = useRef<number>();
 
   useEffect(() => {
+    if (isDragging) {
+      if (cameraAnimationRef.current) cancelAnimationFrame(cameraAnimationRef.current);
+      cameraAnimationRef.current = undefined;
+      return;
+    }
+    
     const newTargetView = (() => {
       switch (status) {
         case 'finished':
@@ -324,7 +364,7 @@ export default function GolfSimulator() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom]); 
+  }, [status, ballPosition, stats.horizontalDistance, stats.maxHeight, zoom, isDragging]); 
   
   useEffect(() => {
     // This effect ensures that on the first load and on resets, the camera snaps to the idle position without animation.
@@ -336,11 +376,20 @@ export default function GolfSimulator() {
       setViewBox(getIdleView());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, zoom]);
+  }, [status]);
 
 
   return (
-    <div className="w-screen h-screen overflow-hidden relative font-sans">
+    <div 
+      className={cn(
+        "w-screen h-screen overflow-hidden relative font-sans",
+        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+      )}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+    >
       <audio ref={swingSfxRef} src="/golf-14-94167.mp3" preload="auto" />
       <audio ref={landSfxRef} src="https://cdn.freesound.org/previews/511/511874_11157367-lq.mp3" preload="auto" />
 
