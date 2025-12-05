@@ -14,6 +14,7 @@ export interface SimulationStats {
   flightTime: number;
   horizontalDistance: number;
   maxHeight: number;
+  maxHeightPoint: Point | null;
   launchSpeed: number;
   impactSpeed: number;
 }

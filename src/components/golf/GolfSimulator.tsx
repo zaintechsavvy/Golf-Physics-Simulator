@@ -28,6 +28,7 @@ const initialStats: SimulationStats = {
   flightTime: 0,
   horizontalDistance: 0,
   maxHeight: 0,
+  maxHeightPoint: null,
   launchSpeed: 0,
   impactSpeed: 0,
 };
@@ -172,12 +173,16 @@ export default function GolfSimulator() {
       if (newPos.y >= 0) {
         setTrajectory(prevTraj => [...prevTraj, newPos]);
         simulationTime.current += dt;
-        setStats(prevStats => ({ 
-          ...prevStats, 
-          maxHeight: Math.max(prevStats.maxHeight, newPos.y),
-          flightTime: simulationTime.current,
-          horizontalDistance: newPos.x,
-        }));
+        setStats(prevStats => {
+          const isNewMaxHeight = newPos.y > prevStats.maxHeight;
+          return {
+            ...prevStats,
+            maxHeight: isNewMaxHeight ? newPos.y : prevStats.maxHeight,
+            maxHeightPoint: isNewMaxHeight ? newPos : prevStats.maxHeightPoint,
+            flightTime: simulationTime.current,
+            horizontalDistance: newPos.x,
+          };
+        });
         return newPos;
       }
       
@@ -350,6 +355,7 @@ export default function GolfSimulator() {
         targetDistance={TARGET_DISTANCE}
         status={status}
         finalDistance={stats.horizontalDistance}
+        maxHeightPoint={stats.maxHeightPoint}
         launchAngle={params.angle}
         launchSpeed={params.initialVelocity}
       />

@@ -14,6 +14,7 @@ type GolfCourseProps = {
   targetDistance: number;
   status: SimulationStatus;
   finalDistance: number;
+  maxHeightPoint: Point | null;
   launchAngle: number;
   launchSpeed: number;
 };
@@ -31,6 +32,7 @@ export default function GolfCourse({
   targetDistance,
   status,
   finalDistance,
+  maxHeightPoint,
   launchAngle,
   launchSpeed
 }: GolfCourseProps) {
@@ -46,6 +48,7 @@ export default function GolfCourse({
   const svgBallPosition = worldToSvg(ballPosition);
   const svgTrajectory = trajectory.map(worldToSvg);
   const svgAimingArc = aimingArc.map(worldToSvg);
+  const svgMaxHeightPoint = maxHeightPoint ? worldToSvg(maxHeightPoint) : null;
 
   const pathData = (points: Point[]) => {
     if (points.length === 0) return '';
@@ -135,6 +138,18 @@ export default function GolfCourse({
           stroke="hsl(var(--foreground))"
           strokeWidth="1.5"
           strokeOpacity="0.3"
+        />
+      )}
+
+      {/* Apex point */}
+      {svgMaxHeightPoint && (
+        <circle
+          cx={svgMaxHeightPoint.x}
+          cy={svgMaxHeightPoint.y}
+          r="4"
+          fill="hsl(var(--accent))"
+          stroke="white"
+          strokeWidth="1"
         />
       )}
 
