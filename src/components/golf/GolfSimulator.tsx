@@ -46,7 +46,7 @@ export default function GolfSimulator() {
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
-  const [zoom, setZoom] = useState(0.8);
+  const [zoom, setZoom] = useState(1);
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
@@ -162,7 +162,7 @@ export default function GolfSimulator() {
                 cancelAnimationFrame(animationFrameId.current);
                 animationFrameId.current = undefined;
             }
-          return {x: prevPos.x, y: 0}; // Land on ground
+          return {x: newPos.x, y: 0}; // Land on ground
         }
         
         setTrajectory(prevTraj => [...prevTraj, newPos]);
@@ -217,14 +217,14 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = (): ViewBox => ({
     x: -COURSE_WIDTH / 4,
-    y: (COURSE_HEIGHT / 2) - COURSE_HEIGHT,
+    y: -COURSE_HEIGHT / 2,
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
 
   const getFlyingView = (): ViewBox => ({
-    x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
-    y: - (COURSE_HEIGHT / zoom / 2) - ballPosition.y * PIXELS_PER_METER + COURSE_HEIGHT / 2,
+    x: ballPosition.x * PIXELS_PER_METER - (viewBox.width / 2) + 50,
+    y: - (viewBox.height / 2) - ballPosition.y * PIXELS_PER_METER,
     width: COURSE_WIDTH / zoom,
     height: COURSE_HEIGHT / zoom,
   });
@@ -350,5 +350,3 @@ export default function GolfSimulator() {
     </div>
   );
 }
-
-    
