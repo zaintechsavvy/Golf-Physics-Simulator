@@ -15,7 +15,7 @@ const COURSE_HEIGHT = 800;
 const TARGET_DISTANCE = 350; // meters
 
 const initialPhysicsState: PhysicsState = {
-  angle: 45,
+  angle: 0,
   initialVelocity: 40,
   gravity: G_CONSTANT,
   mass: 0.0459, // Standard golf ball mass in kg
