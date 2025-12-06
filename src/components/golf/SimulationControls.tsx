@@ -59,7 +59,7 @@ export default function SimulationControls({
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
         <div className="flex items-center gap-2 p-2 bg-card/80 backdrop-blur-sm rounded-lg shadow-lg">
           {status !== 'flying' && status !== 'paused' && (
-            <Button size="lg" onClick={onSwing} className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold">
+            <Button size="lg" onClick={onSwing} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
               <Play className="mr-2 h-5 w-5 fill-current" />
               Swing
             </Button>
@@ -85,15 +85,14 @@ export default function SimulationControls({
             <Trash2 />
           </ControlButton>
 
-          <ControlButton 
-            variant="outline" 
-            size="icon" 
+          <Button 
             onClick={onStoreRun} 
-            disabled={!canStoreRun} 
-            tooltip="Store Run"
+            disabled={!canStoreRun}
+            className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
           >
-            <Save />
-          </ControlButton>
+            Store
+            <Save className="ml-2 h-4 w-4" />
+          </Button>
 
           <Dialog>
             <Tooltip>
@@ -127,5 +126,3 @@ export default function SimulationControls({
     </TooltipProvider>
   );
 }
-
-    

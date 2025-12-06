@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import AngleControl from './AngleControl';
 import { calculateTrajectory, type SimulationResult } from '@/lib/physics';
 import DataTable from './DataTable';
+import { useToast } from '@/hooks/use-toast';
 
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
@@ -71,6 +72,7 @@ export default function GolfSimulator() {
   const trajectoryData = useRef<SimulationResult | null>(null);
   
   const courseRef = useRef<SVGSVGElement>(null);
+  const { toast } = useToast();
 
   const resetSimulation = useCallback(() => {
     if (animationFrameId.current) {
@@ -205,6 +207,16 @@ export default function GolfSimulator() {
         params: lastCompletedRun.current!.params,
         stats: lastCompletedRun.current!.stats,
       }]);
+      toast({
+        title: "Run Stored",
+        description: "The simulation data has been saved.",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "No data to store",
+        description: "You must complete a simulation before storing the data.",
+      });
     }
   };
 
@@ -461,7 +473,7 @@ export default function GolfSimulator() {
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
         onToggleSlowMotion={() => setSlowMotion(s => !s)}
         onStoreRun={handleStoreRun}
-        canStoreRun={!!lastCompletedRun.current}
+        canStoreRun={status === 'finished'}
         dataTable={<DataTable runs={storedRuns} onClear={() => setStoredRuns([])} />}
       />
     </div>
