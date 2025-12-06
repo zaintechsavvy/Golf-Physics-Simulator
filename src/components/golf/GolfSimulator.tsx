@@ -85,7 +85,6 @@ export default function GolfSimulator() {
     simulationTime.current = 0;
     lastFrameTime.current = performance.now();
     trajectoryData.current = null;
-    lastCompletedRun.current = null;
   }, []);
 
   const handleParamChange = (newParams: Partial<PhysicsState>) => {
