@@ -104,7 +104,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       </g>
       
       {/* Golf Club */}
-      <g transform={`translate(${TEE_X_OFFSET - 10}, ${groundY - 10})`}>
+      <g transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`}>
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
