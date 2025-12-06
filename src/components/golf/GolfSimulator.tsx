@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { PhysicsState, SimulationStatus, SimulationStats, Point } from '@/lib/types';
+import type { PhysicsState, SimulationStatus, SimulationStats, Point, SimulationRun } from '@/lib/types';
 import PhysicsControls from './PhysicsControls';
 import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
@@ -8,6 +8,7 @@ import GolfCourse from './GolfCourse';
 import { cn } from '@/lib/utils';
 import AngleControl from './AngleControl';
 import { calculateTrajectory, type SimulationResult } from '@/lib/physics';
+import DataTable from './DataTable';
 
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
@@ -59,6 +60,9 @@ export default function GolfSimulator() {
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
   const animationFrameId = useRef<number>();
 
+  const [storedRuns, setStoredRuns] = useState<SimulationRun[]>([]);
+  const lastCompletedRun = useRef<{params: PhysicsState, stats: SimulationStats} | null>(null);
+
   const swingSfxRef = useRef<HTMLAudioElement>(null);
   const landSfxRef = useRef<HTMLAudioElement>(null);
 
@@ -81,6 +85,7 @@ export default function GolfSimulator() {
     simulationTime.current = 0;
     lastFrameTime.current = performance.now();
     trajectoryData.current = null;
+    lastCompletedRun.current = null;
   }, []);
 
   const handleParamChange = (newParams: Partial<PhysicsState>) => {
@@ -146,13 +151,14 @@ export default function GolfSimulator() {
       landSfxRef.current?.play().catch(console.error);
       setStats(finalStats);
       setStatus('finished');
+      lastCompletedRun.current = { params, stats: finalStats };
        // @ts-ignore
       setBallPosition(currentPoint); // Ensure final position is set
       animationFrameId.current = undefined;
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
-  }, [isSlowMotion, status]);
+  }, [isSlowMotion, status, params]);
 
 
   useEffect(() => {
@@ -192,6 +198,18 @@ export default function GolfSimulator() {
   const handlePause = () => setStatus('paused');
   const handlePlay = () => setStatus('flying');
   const handleClearPath = () => setTrajectory([ballPosition]);
+
+  const handleStoreRun = () => {
+    if (lastCompletedRun.current) {
+      setStoredRuns(prev => [...prev, {
+        id: Date.now(),
+        params: lastCompletedRun.current!.params,
+        stats: lastCompletedRun.current!.stats,
+      }]);
+      // Prevent storing the same run twice
+      lastCompletedRun.current = null;
+    }
+  };
 
   // --- ANGLE DRAG LOGIC ---
   const handleAngleDragStart = (e: React.MouseEvent) => {
@@ -440,6 +458,9 @@ export default function GolfSimulator() {
         onZoomIn={() => setZoom(z => Math.min(z * 1.2, 5))}
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
         onToggleSlowMotion={() => setSlowMotion(s => !s)}
+        onStoreRun={handleStoreRun}
+        canStoreRun={!!lastCompletedRun.current}
+        dataTable={<DataTable runs={storedRuns} onClear={() => setStoredRuns([])} />}
       />
     </div>
   );

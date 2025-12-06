@@ -1,9 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Pause, Play, RotateCcw, Trash2, ZoomIn, ZoomOut, Rabbit, Snail } from 'lucide-react';
+import { Pause, Play, RotateCcw, Trash2, ZoomIn, ZoomOut, Rabbit, Snail, Save, SheetIcon } from 'lucide-react';
 import type { SimulationStatus } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 type SimulationControlsProps = {
   status: SimulationStatus;
@@ -16,6 +21,9 @@ type SimulationControlsProps = {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onToggleSlowMotion: () => void;
+  onStoreRun: () => void;
+  canStoreRun: boolean;
+  dataTable: React.ReactNode;
 };
 
 const ControlButton = ({ tooltip, children, ...props }: { tooltip: string } & React.ComponentProps<typeof Button>) => (
@@ -40,6 +48,9 @@ export default function SimulationControls({
   onZoomIn,
   onZoomOut,
   onToggleSlowMotion,
+  onStoreRun,
+  canStoreRun,
+  dataTable,
 }: SimulationControlsProps) {
   const isSimulating = status === 'flying' || status === 'paused';
 
@@ -65,7 +76,7 @@ export default function SimulationControls({
               <Play />
             </ControlButton>
           )}
-
+          
           <ControlButton variant="outline" size="icon" onClick={onToggleSlowMotion} tooltip={isSlowMotion ? "Normal Speed" : "Slow Motion"}>
             {isSlowMotion ? <Rabbit /> : <Snail />}
           </ControlButton>
@@ -73,6 +84,32 @@ export default function SimulationControls({
           <ControlButton variant="outline" size="icon" onClick={onClearPath} disabled={!isSimulating} tooltip="Clear Path">
             <Trash2 />
           </ControlButton>
+
+          <ControlButton 
+            variant="outline" 
+            size="icon" 
+            onClick={onStoreRun} 
+            disabled={!canStoreRun} 
+            tooltip="Store Run"
+          >
+            <Save />
+          </ControlButton>
+
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                 <DialogTrigger asChild>
+                    <Button variant="outline" size="icon"><SheetIcon /></Button>
+                 </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Stored Runs</p>
+              </TooltipContent>
+            </Tooltip>
+            <DialogContent className="max-w-4xl">
+              {dataTable}
+            </DialogContent>
+          </Dialog>
 
           <ControlButton variant="outline" size="icon" onClick={onReset} tooltip="Reset">
             <RotateCcw />

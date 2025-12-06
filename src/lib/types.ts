@@ -26,3 +26,9 @@ export type Point = {
   y: number;
   t?: number; // Optional time property
 };
+
+export type SimulationRun = {
+  id: number;
+  params: PhysicsState;
+  stats: SimulationStats;
+};
