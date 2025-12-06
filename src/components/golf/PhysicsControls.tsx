@@ -100,8 +100,11 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
               <SelectValue placeholder="Select a planet" />
             </SelectTrigger>
             <SelectContent>
-              {Object.keys(GRAVITY_PRESETS).map(key => (
-                <SelectItem key={key} value={key}>{key}</SelectItem>
+              {Object.entries(GRAVITY_PRESETS).map(([name, value]) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                  {name !== 'Custom' && ` (${value.toFixed(2)} m/s²)`}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
