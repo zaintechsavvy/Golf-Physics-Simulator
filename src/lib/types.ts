@@ -3,7 +3,6 @@ export interface PhysicsState {
   initialVelocity: number;
   gravity: number;
   mass: number;
-  diameter: number;
   airResistance: boolean;
   dragCoefficient: number;
 }

@@ -1,6 +1,7 @@
 import type { PhysicsState, SimulationStats, Point } from './types';
 
 const AIR_DENSITY = 1.225; // kg/m^3
+const GOLF_BALL_DIAMETER = 0.0427; // Standard golf ball diameter in m
 
 export type SimulationResult = {
   trajectory: Point[];
@@ -118,7 +119,7 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
   let maxHeight = 0;
   let maxHeightPoint: Point | null = { x: 0, y: 0, t: 0 };
   
-  const area = Math.PI * (params.diameter / 2) ** 2;
+  const area = Math.PI * (GOLF_BALL_DIAMETER / 2) ** 2;
   const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
 
   // If the ball is fired straight into the ground, it won't move.

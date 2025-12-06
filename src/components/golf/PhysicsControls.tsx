@@ -6,11 +6,26 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import type { PhysicsState } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useState } from 'react';
 
 type PhysicsControlsProps = {
   params: PhysicsState;
   onParamChange: (newParams: Partial<PhysicsState>) => void;
   isSimulating: boolean;
+};
+
+const GRAVITY_PRESETS = {
+  'Earth': 9.807,
+  'Moon': 1.62,
+  'Mars': 3.721,
+  'Custom': -1,
 };
 
 const SliderControl = ({
@@ -52,6 +67,15 @@ const SliderControl = ({
 );
 
 export default function PhysicsControls({ params, onParamChange, isSimulating }: PhysicsControlsProps) {
+  const [gravitySelection, setGravitySelection] = useState('Earth');
+
+  const handleGravityChange = (selection: string) => {
+    setGravitySelection(selection);
+    if (selection !== 'Custom') {
+      onParamChange({ gravity: GRAVITY_PRESETS[selection as keyof typeof GRAVITY_PRESETS] });
+    }
+  };
+
   return (
     <Card className="w-80 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardHeader>
@@ -68,16 +92,34 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
           onChange={(v) => onParamChange({ initialVelocity: v })}
           disabled={isSimulating}
         />
-        <SliderControl
-          label="Gravity"
-          value={params.gravity}
-          min={1}
-          max={20}
-          step={0.1}
-          unit="m/s²"
-          onChange={(v) => onParamChange({ gravity: v })}
-          disabled={isSimulating}
-        />
+        
+        <div className="grid gap-3">
+          <Label>Gravity</Label>
+           <Select onValueChange={handleGravityChange} defaultValue="Earth" disabled={isSimulating}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a planet" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.keys(GRAVITY_PRESETS).map(key => (
+                <SelectItem key={key} value={key}>{key}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {gravitySelection === 'Custom' && (
+            <SliderControl
+              label="Custom Gravity"
+              value={params.gravity}
+              min={1}
+              max={25}
+              step={0.1}
+              unit="m/s²"
+              onChange={(v) => onParamChange({ gravity: v })}
+              disabled={isSimulating}
+            />
+          )}
+        </div>
+
+
         <SliderControl
           label="Ball Mass"
           value={params.mass}
@@ -86,16 +128,6 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
           step={0.001}
           unit="kg"
           onChange={(v) => onParamChange({ mass: v })}
-          disabled={isSimulating}
-        />
-        <SliderControl
-          label="Ball Diameter"
-          value={params.diameter}
-          min={0.02}
-          max={0.05}
-          step={0.001}
-          unit="m"
-          onChange={(v) => onParamChange({ diameter: v })}
           disabled={isSimulating}
         />
         <div className="grid gap-4">

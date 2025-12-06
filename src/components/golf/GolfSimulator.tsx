@@ -19,9 +19,8 @@ const TARGET_DISTANCE = 350; // meters
 const initialPhysicsState: PhysicsState = {
   angle: 45,
   initialVelocity: 40,
-  gravity: 9.80665,
+  gravity: 9.807,
   mass: 0.0459, // Standard golf ball mass in kg
-  diameter: 0.0427, // Standard golf ball diameter in m
   airResistance: true,
   dragCoefficient: 0.4,
 };
