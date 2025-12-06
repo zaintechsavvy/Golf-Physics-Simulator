@@ -13,6 +13,22 @@ export type SimulationResult = {
  * and numerical integration for physics with air resistance.
  */
 export function calculateTrajectory(params: PhysicsState, timeStep: number = 0.016): SimulationResult {
+  if (params.initialVelocity === 0) {
+    return {
+      trajectory: [{ x: 0, y: 0, t: 0 }],
+      finalStats: {
+        flightTime: 0,
+        horizontalDistance: 0,
+        maxHeight: 0,
+        maxHeightPoint: { x: 0, y: 0, t: 0 },
+        timeToMaxHeight: 0,
+        horizontalDistanceToMaxHeight: 0,
+        launchSpeed: 0,
+        impactSpeed: 0,
+      }
+    };
+  }
+
   if (!params.airResistance) {
     return calculateAnalyticalTrajectory(params);
   } else {
@@ -31,6 +47,22 @@ function calculateAnalyticalTrajectory(params: PhysicsState): SimulationResult {
 
   const v0x = v0 * Math.cos(angleRad);
   const v0y = v0 * Math.sin(angleRad);
+  
+  if (v0y <= 0) { // If angle is 0 or less, it won't go up.
+    return {
+      trajectory: [{ x: 0, y: 0, t: 0 }],
+      finalStats: {
+        flightTime: 0,
+        horizontalDistance: 0,
+        maxHeight: 0,
+        maxHeightPoint: { x: 0, y: 0, t: 0 },
+        timeToMaxHeight: 0,
+        horizontalDistanceToMaxHeight: 0,
+        launchSpeed: v0,
+        impactSpeed: v0,
+      },
+    };
+  }
 
   const flightTime = (2 * v0y) / g;
   const horizontalDistance = v0x * flightTime;
@@ -88,6 +120,23 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number): Simulat
   
   const area = Math.PI * (params.diameter / 2) ** 2;
   const dragConstant = 0.5 * AIR_DENSITY * area * params.dragCoefficient;
+
+  // If the ball is fired straight into the ground, it won't move.
+  if (vy <= 0 && y === 0) {
+      return {
+          trajectory: [{ x: 0, y: 0, t: 0 }],
+          finalStats: {
+              flightTime: 0,
+              horizontalDistance: 0,
+              maxHeight: 0,
+              maxHeightPoint: { x: 0, y: 0, t: 0 },
+              timeToMaxHeight: 0,
+              horizontalDistanceToMaxHeight: 0,
+              launchSpeed: params.initialVelocity,
+              impactSpeed: params.initialVelocity,
+          }
+      };
+  }
 
   while (y >= 0) {
     // Store previous position to interpolate landing

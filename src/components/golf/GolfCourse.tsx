@@ -38,7 +38,8 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 }, ref) => {
   const groundY = courseHeight - 50;
 
-  const worldToSvg = (point: Point): Point => {
+  const worldToSvg = (point: Point): Point | null => {
+    if (!point) return null;
     return {
       x: point.x * pixelsPerMeter + TEE_X_OFFSET,
       y: groundY - point.y * pixelsPerMeter,
@@ -46,8 +47,8 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   };
 
   const svgBallPosition = worldToSvg(ballPosition);
-  const svgTrajectory = trajectory.map(worldToSvg);
-  const svgAimingArc = aimingArc.map(worldToSvg);
+  const svgTrajectory = trajectory.map(worldToSvg).filter(p => p !== null) as Point[];
+  const svgAimingArc = aimingArc.map(worldToSvg).filter(p => p !== null) as Point[];
   const svgMaxHeightPoint = finalStats.maxHeightPoint ? worldToSvg(finalStats.maxHeightPoint) : null;
 
   const pathData = (points: Point[]) => {
@@ -129,7 +130,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       </g>
 
       {/* Aiming Arc */}
-      {aimingArc.length > 0 && (
+      {svgAimingArc.length > 0 && (
         <path
           d={aimingArcPathData}
           fill="none"
@@ -141,7 +142,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       )}
       
       {/* Trajectory Path */}
-      {trajectory.length > 1 && (
+      {svgTrajectory.length > 1 && (
          <path
           d={trajectoryPathData}
           fill="none"
@@ -219,11 +220,11 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       )}
       
       {/* Ball */}
-      {status !== 'flying' && status !== 'paused' ? (
+      {svgBallPosition && (status !== 'flying' && status !== 'paused' ? (
         <circle cx={TEE_X_OFFSET} cy={groundY - 2} r="5" fill="white" stroke="black" strokeWidth="0.5" />
       ) : (
         <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
-      )}
+      ))}
     </svg>
   );
 });
