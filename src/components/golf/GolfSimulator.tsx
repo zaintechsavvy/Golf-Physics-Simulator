@@ -16,7 +16,7 @@ const COURSE_HEIGHT = 800;
 const TARGET_DISTANCE = 350; // meters
 
 const initialPhysicsState: PhysicsState = {
-  angle: 0,
+  angle: 45,
   initialVelocity: 40,
   gravity: 9.80665,
   mass: 0.0459, // Standard golf ball mass in kg
@@ -136,11 +136,11 @@ export default function GolfSimulator() {
     }
     
     // @ts-ignore - currentPoint will be defined
-    setBallPosition(currentPoint);
+    if(currentPoint) setBallPosition(currentPoint);
     
     const visibleTrajectory = trajPoints.filter(p => p.t! <= simulationTime.current);
     // @ts-ignore
-    if (visibleTrajectory.length > 0 && JSON.stringify(visibleTrajectory[visibleTrajectory.length - 1]) !== JSON.stringify(currentPoint)) {
+    if (visibleTrajectory.length > 0 && currentPoint && JSON.stringify(visibleTrajectory[visibleTrajectory.length - 1]) !== JSON.stringify(currentPoint)) {
         // @ts-ignore
         visibleTrajectory.push(currentPoint);
     }
@@ -205,8 +205,6 @@ export default function GolfSimulator() {
         params: lastCompletedRun.current!.params,
         stats: lastCompletedRun.current!.stats,
       }]);
-      // Prevent storing the same run twice
-      lastCompletedRun.current = null;
     }
   };
 
@@ -302,12 +300,17 @@ export default function GolfSimulator() {
     height: COURSE_HEIGHT / 0.7,
   }), []);
 
-  const getFlyingView = useCallback((): ViewBox => ({
-    x: ballPosition.x * PIXELS_PER_METER - (COURSE_WIDTH / zoom / 2) + 50,
-    y: ballPosition.y * -PIXELS_PER_METER - (COURSE_HEIGHT / zoom / 2) + (COURSE_HEIGHT - 50),
-    width: COURSE_WIDTH / zoom,
-    height: COURSE_HEIGHT / zoom,
-  }), [ballPosition, zoom]);
+  const getFlyingView = useCallback((): ViewBox => {
+    // When flying, the view should be centered on the ball and zoomed.
+    const targetWidth = COURSE_WIDTH / zoom;
+    const targetHeight = COURSE_HEIGHT / zoom;
+    return {
+      x: ballPosition.x * PIXELS_PER_METER - (targetWidth / 2) + 50,
+      y: -ballPosition.y * PIXELS_PER_METER - (targetHeight / 2) + (COURSE_HEIGHT - 50),
+      width: targetWidth,
+      height: targetHeight,
+    }
+  }, [ballPosition, zoom]);
 
  const getFinishedView = useCallback((): ViewBox => {
     const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 300; // Add padding
@@ -407,7 +410,7 @@ export default function GolfSimulator() {
     <div 
       className={cn(
         "w-screen h-screen overflow-hidden relative font-sans",
-        isDragging ? 'cursor-grabbing' : 'cursor-grab'
+        (isDragging || isSettingAngle) ? 'cursor-grabbing' : 'cursor-grab'
       )}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
