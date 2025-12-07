@@ -140,7 +140,7 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
         <div className="grid gap-3">
           <Separator />
            <div className="flex justify-between items-center text-sm">
-             <span className="font-semibold">Force of Gravity (F = ma)</span>
+             <span className="font-semibold">Force of Gravity (F<sub>g</sub> = mg)</span>
              <span className="font-bold text-base tabular-nums">{gravitationalForce.toFixed(2)} N</span>
            </div>
           <Separator />
