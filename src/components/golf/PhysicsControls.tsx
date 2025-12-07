@@ -37,6 +37,7 @@ const SliderControl = ({
   unit,
   onChange,
   disabled,
+  precision = 2,
 }: {
   label: string;
   value: number;
@@ -46,12 +47,13 @@ const SliderControl = ({
   unit: string;
   onChange: (value: number) => void;
   disabled: boolean;
+  precision?: number;
 }) => (
   <div className="grid gap-2">
     <div className="flex justify-between items-center">
       <Label htmlFor={label.toLowerCase().replace(' ', '-')}>{label}</Label>
       <span className="text-sm font-medium text-muted-foreground w-28 text-right">
-        {value.toFixed(2)} {unit}
+        {value.toFixed(precision)} {unit}
       </span>
     </div>
     <Slider
@@ -132,6 +134,7 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
           unit="kg"
           onChange={(v) => onParamChange({ mass: v })}
           disabled={isSimulating}
+          precision={3}
         />
 
         <div className="grid gap-4">
