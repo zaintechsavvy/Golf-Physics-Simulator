@@ -520,9 +520,7 @@ export default function GolfSimulator() {
         launchSpeed={params.initialVelocity}
         onAngleDragStart={handleAngleDragStart}
       />
-      <div ref={dataOverlayRef}>
-        <DataOverlay stats={stats} status={status} />
-      </div>
+      <DataOverlay ref={dataOverlayRef} stats={stats} status={status} />
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-4">
         <div ref={physicsControlsRef}>
           <PhysicsControls

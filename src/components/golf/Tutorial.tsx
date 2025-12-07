@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import type { TutorialStep } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type TutorialProps = {
@@ -112,9 +112,14 @@ export default function Tutorial({ steps, stepIndex, onStepChange, onComplete }:
           <h3 className="text-lg font-bold mb-2">{currentStep.title}</h3>
           <p className="text-sm text-muted-foreground mb-4">{currentStep.content}</p>
           <div className="flex justify-between items-center">
-            <span className="text-xs text-muted-foreground">
-              {stepIndex + 1} / {steps.length}
-            </span>
+            <div className="flex items-center gap-2">
+               <span className="text-xs text-muted-foreground">
+                {stepIndex + 1} / {steps.length}
+              </span>
+               <Button variant="ghost" size="sm" onClick={onComplete}>
+                  Skip
+                </Button>
+            </div>
             <div className="flex gap-2">
               {stepIndex > 0 && (
                  <Button variant="outline" size="sm" onClick={handlePrev}>

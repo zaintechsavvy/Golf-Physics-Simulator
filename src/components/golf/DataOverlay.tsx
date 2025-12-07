@@ -1,6 +1,7 @@
 'use client';
 import type { SimulationStats, SimulationStatus } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { forwardRef } from 'react';
 
 type DataOverlayProps = {
   stats: SimulationStats;
@@ -14,9 +15,9 @@ const DataItem = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
-export default function DataOverlay({ stats, status }: DataOverlayProps) {
+const DataOverlay = forwardRef<HTMLDivElement, DataOverlayProps>(({ stats, status }, ref) => {
   return (
-    <Card className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-auto shadow-lg bg-card/80 backdrop-blur-sm">
+    <Card ref={ref} className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-auto shadow-lg bg-card/80 backdrop-blur-sm">
       <CardContent className="p-3">
         <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
           <DataItem label="Flight Time" value={`${stats.flightTime.toFixed(2)}s`} />
@@ -30,4 +31,7 @@ export default function DataOverlay({ stats, status }: DataOverlayProps) {
       </CardContent>
     </Card>
   );
-}
+});
+DataOverlay.displayName = 'DataOverlay';
+
+export default DataOverlay;
