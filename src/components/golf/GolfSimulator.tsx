@@ -564,7 +564,7 @@ export default function GolfSimulator() {
       />
        <div className="absolute bottom-4 right-4 z-20 text-xs">
         <div className="flex items-center gap-4">
-          <span className="text-white">© 2025 Zain Pirani. All Rights Reserved.</span>
+          <span className="text-white">© 2025 Zain Pirani. MIT License.</span>
           <a
             href="https://github.com/zaintechsavvy/Golf-Physics-Simulator"
             target="_blank"
