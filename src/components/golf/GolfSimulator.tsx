@@ -17,7 +17,7 @@ import { Github } from 'lucide-react';
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
 const COURSE_HEIGHT = 800;
-const TARGET_DISTANCE = 350; // meters
+const TARGET_DISTANCE = 100; // meters
 
 const initialPhysicsState: PhysicsState = {
   angle: 45,
@@ -41,10 +41,10 @@ const initialStats: SimulationStats = {
 };
 
 const initialObstacles: Obstacle[] = [
-  { type: 'tree', x: 80, width: 8, height: 30 },
-  { type: 'sand', x: 120, width: 30, depth: 5 },
-  { type: 'tree', x: 160, width: 10, height: 40 },
-  { type: 'tree', x: 185, width: 7, height: 25 },
+  { type: 'tree', x: 40, width: 5, height: 15 },
+  { type: 'sand', x: 60, width: 15, depth: 3 },
+  { type: 'tree', x: 75, width: 4, height: 20 },
+  { type: 'tree', x: 85, width: 4, height: 12 },
 ];
 
 type ViewBox = {
