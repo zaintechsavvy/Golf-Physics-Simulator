@@ -7,7 +7,7 @@ function getValue<T>(key: string, defaultValue: T): T {
         return defaultValue;
     }
     const storedValue = window.localStorage.getItem(key);
-    if (storedValue === null) {
+    if (storedValue === null || storedValue === 'undefined') {
         return defaultValue;
     }
     try {

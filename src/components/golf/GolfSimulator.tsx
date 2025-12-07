@@ -12,6 +12,7 @@ import DataTable from './DataTable';
 import { useToast } from '@/hooks/use-toast';
 import Tutorial from './Tutorial';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { Github } from 'lucide-react';
 
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
@@ -62,7 +63,7 @@ export default function GolfSimulator() {
   const [viewBox, setViewBox] = useState<ViewBox>({ x: 0, y: 0, width: COURSE_WIDTH, height: COURSE_HEIGHT });
   const animationFrameId = useRef<number>();
 
-  const [storedRuns, setStoredRuns] = useState<SimulationRun[]>([]);
+  const [storedRuns, setStoredRuns] = useLocalStorage<SimulationRun[]>('golf-sim-runs', []);
   const lastCompletedRun = useRef<{params: PhysicsState, stats: SimulationStats} | null>(null);
 
   const swingSfxRef = useRef<HTMLAudioElement>(null);
@@ -560,6 +561,20 @@ export default function GolfSimulator() {
         dataTableButtonRef={dataTableButtonRef}
         zoomControlsRef={zoomControlsRef}
       />
+       <div className="absolute bottom-4 right-4 z-20 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <span>© 2025 Zain Pirani. All Rights Reserved.</span>
+          <a
+            href="https://github.com/your-username/your-repo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <Github size={14} />
+            <span>View on GitHub</span>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
