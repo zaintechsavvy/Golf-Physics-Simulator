@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { PhysicsState, SimulationStatus, SimulationStats, Point, SimulationRun } from '@/lib/types';
+import type { PhysicsState, SimulationStatus, SimulationStats, Point, SimulationRun, TutorialStep } from '@/lib/types';
 import PhysicsControls from './PhysicsControls';
 import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
@@ -10,6 +10,8 @@ import AngleControl from './AngleControl';
 import { calculateTrajectory, type SimulationResult } from '@/lib/physics';
 import DataTable from './DataTable';
 import { useToast } from '@/hooks/use-toast';
+import Tutorial from './Tutorial';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
@@ -73,6 +75,73 @@ export default function GolfSimulator() {
   const courseRef = useRef<SVGSVGElement>(null);
   const { toast } = useToast();
 
+  const [tutorialActive, setTutorialActive] = useLocalStorage('golf-sim-tutorial-complete', false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const physicsControlsRef = useRef<HTMLDivElement>(null);
+  const angleControlRef = useRef<HTMLDivElement>(null);
+  const swingButtonRef = useRef<HTMLButtonElement>(null);
+  const dataOverlayRef = useRef<HTMLDivElement>(null);
+  const storeButtonRef = useRef<HTMLButtonElement>(null);
+  const dataTableButtonRef = useRef<HTMLButtonElement>(null);
+  const zoomControlsRef = useRef<HTMLDivElement>(null);
+
+  const tutorialSteps: TutorialStep[] = [
+    {
+      targetRef: physicsControlsRef,
+      title: 'Welcome to the Golf Simulator!',
+      content: 'This tutorial will guide you through the main controls. First, we have the Physics Controls.',
+      placement: 'left',
+    },
+    {
+      targetRef: physicsControlsRef,
+      title: 'Physics Controls',
+      content: 'Here you can adjust parameters like Initial Velocity, Gravity, Ball Mass, and Air Resistance. Try changing them!',
+      placement: 'left',
+    },
+    {
+      targetRef: angleControlRef,
+      title: 'Launch Angle',
+      content: 'Use this slider or drag the large arrow on the course to set the launch angle of the golf ball.',
+      placement: 'left',
+    },
+    {
+      targetRef: swingButtonRef,
+      title: 'Swing!',
+      content: "When you're ready, press this button to swing the club and launch the ball.",
+      placement: 'top',
+    },
+    {
+      targetRef: dataOverlayRef,
+      title: 'Live Data',
+      content: 'While the ball is in flight, you can see live statistics like flight time, distance, and height right here.',
+      placement: 'bottom',
+    },
+    {
+      targetRef: storeButtonRef,
+      title: 'Store Your Run',
+      content: 'After the ball lands, you can click this button to save the parameters and results of your shot.',
+      placement: 'top',
+    },
+    {
+      targetRef: dataTableButtonRef,
+      title: 'View Stored Data',
+      content: 'Click here to open a table containing all of your saved simulation runs. This is great for comparison!',
+      placement: 'top',
+    },
+     {
+      targetRef: zoomControlsRef,
+      title: 'Camera Controls',
+      content: 'Use these buttons to zoom in and out. You can also click and drag the background to pan the camera.',
+      placement: 'right',
+    },
+    {
+      targetRef: null,
+      title: 'You\'re all set!',
+      content: 'That covers the basics. Feel free to experiment with different settings. You can restart this tutorial anytime by clicking the "Help" button.',
+      placement: 'center',
+    },
+  ];
+
   const resetSimulation = useCallback(() => {
     if (animationFrameId.current) {
       cancelAnimationFrame(animationFrameId.current);
@@ -85,7 +154,6 @@ export default function GolfSimulator() {
     setStats(initialStats);
     simulationTime.current = 0;
     lastFrameTime.current = performance.now();
-    trajectoryData.current = null;
   }, []);
 
   const handleParamChange = (newParams: Partial<PhysicsState>) => {
@@ -208,10 +276,10 @@ export default function GolfSimulator() {
       }]);
       toast({
         title: "Run Stored",
-        description: "The simulation data has been saved.",
+        description: "The simulation data has been saved successfully.",
       });
     } else {
-      toast({
+       toast({
         variant: "destructive",
         title: "No data to store",
         description: "You must complete a simulation before storing the data.",
@@ -427,6 +495,15 @@ export default function GolfSimulator() {
       <audio ref={swingSfxRef} src="/golf-14-94167.mp3" preload="auto" />
       <audio ref={landSfxRef} src="https://cdn.freesound.org/previews/511/511874_11157367-lq.mp3" preload="auto" />
 
+      {!tutorialActive && (
+          <Tutorial 
+            steps={tutorialSteps}
+            stepIndex={tutorialStep}
+            onStepChange={setTutorialStep}
+            onComplete={() => setTutorialActive(true)}
+          />
+      )}
+
       <GolfCourse
         ref={courseRef}
         ballPosition={ballPosition}
@@ -443,18 +520,24 @@ export default function GolfSimulator() {
         launchSpeed={params.initialVelocity}
         onAngleDragStart={handleAngleDragStart}
       />
-      <DataOverlay stats={stats} status={status} />
+      <div ref={dataOverlayRef}>
+        <DataOverlay stats={stats} status={status} />
+      </div>
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-4">
-        <PhysicsControls
-          params={params}
-          onParamChange={handleParamChange}
-          isSimulating={status === 'flying' || status === 'paused'}
-        />
-        <AngleControl
-          angle={params.angle}
-          onAngleChange={(angle) => handleParamChange({ angle })}
-          disabled={status === 'flying' || status === 'paused'}
-        />
+        <div ref={physicsControlsRef}>
+          <PhysicsControls
+            params={params}
+            onParamChange={handleParamChange}
+            isSimulating={status === 'flying' || status === 'paused'}
+          />
+        </div>
+        <div ref={angleControlRef}>
+          <AngleControl
+            angle={params.angle}
+            onAngleChange={(angle) => handleParamChange({ angle })}
+            disabled={status === 'flying' || status === 'paused'}
+          />
+        </div>
       </div>
       <SimulationControls
         status={status}
@@ -470,9 +553,15 @@ export default function GolfSimulator() {
         onStoreRun={handleStoreRun}
         canStoreRun={status === 'finished'}
         dataTable={<DataTable runs={storedRuns} onClear={() => setStoredRuns([])} />}
+        onShowTutorial={() => {
+          setTutorialStep(0);
+          setTutorialActive(false);
+        }}
+        swingButtonRef={swingButtonRef}
+        storeButtonRef={storeButtonRef}
+        dataTableButtonRef={dataTableButtonRef}
+        zoomControlsRef={zoomControlsRef}
       />
     </div>
   );
 }
-
-    

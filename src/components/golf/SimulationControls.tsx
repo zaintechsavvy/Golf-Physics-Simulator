@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Pause, Play, RotateCcw, Trash2, ZoomIn, ZoomOut, Rabbit, Snail, Save, SheetIcon } from 'lucide-react';
+import { Pause, Play, RotateCcw, Trash2, ZoomIn, ZoomOut, Rabbit, Snail, Save, SheetIcon, HelpCircle } from 'lucide-react';
 import type { SimulationStatus } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -24,6 +24,11 @@ type SimulationControlsProps = {
   onStoreRun: () => void;
   canStoreRun: boolean;
   dataTable: React.ReactNode;
+  onShowTutorial: () => void;
+  swingButtonRef: React.Ref<HTMLButtonElement>;
+  storeButtonRef: React.Ref<HTMLButtonElement>;
+  dataTableButtonRef: React.Ref<HTMLButtonElement>;
+  zoomControlsRef: React.Ref<HTMLDivElement>;
 };
 
 const ControlButton = ({ tooltip, children, ...props }: { tooltip: string } & React.ComponentProps<typeof Button>) => (
@@ -51,6 +56,11 @@ export default function SimulationControls({
   onStoreRun,
   canStoreRun,
   dataTable,
+  onShowTutorial,
+  swingButtonRef,
+  storeButtonRef,
+  dataTableButtonRef,
+  zoomControlsRef,
 }: SimulationControlsProps) {
   const isSimulating = status === 'flying' || status === 'paused';
 
@@ -59,7 +69,7 @@ export default function SimulationControls({
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
         <div className="flex items-center gap-2 p-2 bg-card/80 backdrop-blur-sm rounded-lg shadow-lg">
           {status !== 'flying' && status !== 'paused' && (
-            <Button size="lg" onClick={onSwing} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+            <Button ref={swingButtonRef} size="lg" onClick={onSwing} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
               <Play className="mr-2 h-5 w-5 fill-current" />
               Swing
             </Button>
@@ -86,6 +96,7 @@ export default function SimulationControls({
           </ControlButton>
 
           <Button 
+            ref={storeButtonRef}
             onClick={onStoreRun} 
             disabled={!canStoreRun}
             className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
@@ -98,7 +109,7 @@ export default function SimulationControls({
             <Tooltip>
               <TooltipTrigger asChild>
                  <DialogTrigger asChild>
-                    <Button variant="outline" size="icon"><SheetIcon /></Button>
+                    <Button ref={dataTableButtonRef} variant="outline" size="icon"><SheetIcon /></Button>
                  </DialogTrigger>
               </TooltipTrigger>
               <TooltipContent>
@@ -115,12 +126,15 @@ export default function SimulationControls({
           </ControlButton>
         </div>
       </div>
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      <div ref={zoomControlsRef} className="absolute top-4 left-4 z-10 flex flex-col gap-2">
          <ControlButton variant="outline" size="icon" onClick={onZoomIn} tooltip="Zoom In">
             <ZoomIn />
          </ControlButton>
          <ControlButton variant="outline" size="icon" onClick={onZoomOut} tooltip="Zoom Out">
             <ZoomOut />
+         </ControlButton>
+         <ControlButton variant="outline" size="icon" onClick={onShowTutorial} tooltip="Help">
+            <HelpCircle />
          </ControlButton>
       </div>
     </TooltipProvider>

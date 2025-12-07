@@ -31,3 +31,10 @@ export type SimulationRun = {
   params: PhysicsState;
   stats: SimulationStats;
 };
+
+export type TutorialStep = {
+  targetRef: React.RefObject<HTMLElement> | null;
+  title: string;
+  content: string;
+  placement: 'top' | 'bottom' | 'left' | 'right' | 'center';
+};
