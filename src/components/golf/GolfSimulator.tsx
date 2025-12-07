@@ -17,7 +17,6 @@ import { Github } from 'lucide-react';
 const PIXELS_PER_METER = 15;
 const COURSE_WIDTH = 1200;
 const COURSE_HEIGHT = 800;
-const TARGET_DISTANCE = 100; // meters
 
 const initialPhysicsState: PhysicsState = {
   angle: 45,
@@ -541,7 +540,6 @@ export default function GolfSimulator() {
         courseWidth={COURSE_WIDTH}
         courseHeight={COURSE_HEIGHT}
         pixelsPerMeter={PIXELS_PER_METER}
-        targetDistance={TARGET_DISTANCE}
         status={status}
         finalStats={stats}
         launchAngle={params.angle}
