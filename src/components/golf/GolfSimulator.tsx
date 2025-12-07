@@ -384,10 +384,10 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = useCallback((): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * 0.7 + 300 - (params.startHeight * PIXELS_PER_METER),
+    y: -COURSE_HEIGHT * 0.7 + 300,
     width: COURSE_WIDTH / zoom, 
     height: COURSE_HEIGHT / zoom,
-  }), [zoom, params.startHeight]);
+  }), [zoom]);
 
   const getFlyingView = useCallback((): ViewBox => {
     // When flying, the view should be centered on the ball and zoomed.
