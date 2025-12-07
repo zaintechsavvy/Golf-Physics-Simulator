@@ -218,7 +218,7 @@ export default function GolfSimulator() {
   
     if (hasFinished) {
       landSfxRef.current?.play().catch(console.error);
-      setStats(finalStats);
+      setStats(finalStats); // This was already here, but now it's just confirming the final state
       setStatus('finished');
       lastCompletedRun.current = { params, stats: finalStats };
        // @ts-ignore
@@ -227,7 +227,7 @@ export default function GolfSimulator() {
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
-  }, [isSlowMotion, status, params]);
+  }, [isSlowMotion, status]);
 
 
   useEffect(() => {
@@ -250,13 +250,14 @@ export default function GolfSimulator() {
  const handleSwing = () => {
     resetSimulation();
     
+    // Pre-calculate the entire trajectory and stats first
+    const result = calculateTrajectory(params);
+    trajectoryData.current = result;
+
     // Use a callback with setStatus to guarantee order of operations
     setStatus(() => {
-      // Pre-calculate the entire trajectory and stats
-      const result = calculateTrajectory(params);
-      trajectoryData.current = result;
-
-      setStats({ ...initialStats, launchSpeed: params.initialVelocity });
+      // Set the full stats immediately so child components have it
+      setStats(result.finalStats); 
       
       swingSfxRef.current?.play().catch(console.error);
       
@@ -563,7 +564,7 @@ export default function GolfSimulator() {
       />
        <div className="absolute bottom-4 right-4 z-20 text-xs">
         <div className="flex items-center gap-4">
-          <span>© 2025 Zain Pirani. All Rights Reserved.</span>
+          <span className="text-white">© 2025 Zain Pirani. All Rights Reserved.</span>
           <a
             href="https://github.com/your-username/your-repo"
             target="_blank"
@@ -571,7 +572,7 @@ export default function GolfSimulator() {
             className="flex items-center gap-1 hover:text-foreground transition-colors"
           >
             <Github size={14} />
-            <span>View on GitHub</span>
+            <span className="text-white">View on GitHub</span>
           </a>
         </div>
       </div>
