@@ -61,6 +61,10 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   
   const finalBallSvgX = finalStats.horizontalDistance * pixelsPerMeter + TEE_X_OFFSET;
 
+  // Show apex marker once the ball has passed its highest point during flight, or after it has finished.
+  const showApexMarker = svgMaxHeightPoint && finalStats.maxHeightPoint &&
+    (status === 'finished' || (isFinite(ballPosition.x) && ballPosition.x >= finalStats.maxHeightPoint.x));
+
   return (
     <svg
       ref={ref}
@@ -153,7 +157,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       )}
 
       {/* Apex point marker */}
-      {svgMaxHeightPoint && status === 'finished' && (
+      {showApexMarker && svgMaxHeightPoint && (
         <>
           <line
             x1={svgMaxHeightPoint.x}
