@@ -3,7 +3,6 @@ import type { SimulationRun } from '@/lib/types';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileDown } from 'lucide-react';
 
 type DataTableProps = {
   runs: SimulationRun[];
@@ -23,20 +23,68 @@ type DataTableProps = {
 };
 
 export default function DataTable({ runs, onClear }: DataTableProps) {
+  const exportToCSV = () => {
+    if (runs.length === 0) return;
+
+    const headers = [
+      "Run",
+      "Angle (°)",
+      "Velocity (m/s)",
+      "Gravity (m/s²)",
+      "Mass (kg)",
+      "Air Resistance",
+      "Drag Coeff.",
+      "Flight Time (s)",
+      "Max Height (m)",
+      "Distance (m)",
+      "Impact Speed (m/s)",
+    ];
+
+    const rows = runs.map((run, index) => [
+      index + 1,
+      run.params.angle.toFixed(1),
+      run.params.initialVelocity.toFixed(2),
+      run.params.gravity.toFixed(2),
+      run.params.mass.toFixed(3),
+      run.params.airResistance ? 'On' : 'Off',
+      run.params.airResistance ? run.params.dragCoefficient.toFixed(2) : 'N/A',
+      run.stats.flightTime.toFixed(2),
+      run.stats.maxHeight.toFixed(2),
+      run.stats.horizontalDistance.toFixed(2),
+      run.stats.impactSpeed.toFixed(2),
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8," 
+      + headers.join(",") + "\n" 
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "golf_simulation_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       <DialogHeader>
         <DialogTitle>Simulation Data</DialogTitle>
         <DialogDescription>
-          A log of all your stored simulation runs.
+          A log of all your stored simulation runs. Export your data to CSV.
         </DialogDescription>
       </DialogHeader>
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <Button variant="outline" size="sm" onClick={exportToCSV} disabled={runs.length === 0}>
+          <FileDown className="mr-2 h-4 w-4" />
+          Export to CSV
+        </Button>
         <Button variant="outline" size="sm" onClick={onClear} disabled={runs.length === 0}>
           Clear Data
         </Button>
       </div>
-      <ScrollArea className="h-96 w-full border rounded-md">
+      <ScrollArea className="h-96 w-full border rounded-md mt-4">
         <Table>
           <TableHeader className="sticky top-0 bg-secondary">
             <TableRow>
