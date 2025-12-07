@@ -30,6 +30,7 @@ export default function DataTable({ runs, onClear }: DataTableProps) {
       "Run",
       "Angle (°)",
       "Velocity (m/s)",
+      "Start Height (m)",
       "Gravity (m/s²)",
       "Mass (kg)",
       "Air Resistance",
@@ -44,6 +45,7 @@ export default function DataTable({ runs, onClear }: DataTableProps) {
       index + 1,
       run.params.angle.toFixed(1),
       run.params.initialVelocity.toFixed(2),
+      run.params.startHeight.toFixed(1),
       run.params.gravity.toFixed(2),
       run.params.mass.toFixed(3),
       run.params.airResistance ? 'On' : 'Off',
@@ -91,6 +93,7 @@ export default function DataTable({ runs, onClear }: DataTableProps) {
               <TableHead className="w-[50px]">Run</TableHead>
               <TableHead>Angle</TableHead>
               <TableHead>Velocity</TableHead>
+              <TableHead>Start H.</TableHead>
               <TableHead>Gravity</TableHead>
               <TableHead>Mass</TableHead>
               <TableHead>Drag Coeff.</TableHead>
@@ -103,7 +106,7 @@ export default function DataTable({ runs, onClear }: DataTableProps) {
           <TableBody>
             {runs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center">
+                <TableCell colSpan={11} className="h-24 text-center">
                   No data stored yet. Complete a simulation and click 'Store Run'.
                 </TableCell>
               </TableRow>
@@ -113,6 +116,7 @@ export default function DataTable({ runs, onClear }: DataTableProps) {
                   <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{run.params.angle.toFixed(1)}°</TableCell>
                   <TableCell>{run.params.initialVelocity.toFixed(2)} m/s</TableCell>
+                  <TableCell>{run.params.startHeight.toFixed(1)} m</TableCell>
                   <TableCell>{run.params.gravity.toFixed(2)} m/s²</TableCell>
                   <TableCell>{run.params.mass.toFixed(3)} kg</TableCell>
                   <TableCell>{run.params.airResistance ? run.params.dragCoefficient.toFixed(2) : 'N/A'}</TableCell>
