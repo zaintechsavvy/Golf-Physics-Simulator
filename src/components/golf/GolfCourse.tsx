@@ -173,7 +173,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
             strokeWidth="1"
           />
           <g transform={`translate(${svgMaxHeightPoint.x + 10}, ${svgMaxHeightPoint.y})`} className="text-accent-foreground">
-             <text y="0" fontSize="12" fontWeight="bold" fill="hsl(var(--accent))">Apex</text>
+             <text y="0" fontSize="12" fontWeight="bold" fill="hsl(var(--accent))">Max Point</text>
              <text y="15" fontSize="12">Height: {finalStats.maxHeight.toFixed(1)}m</text>
              <text y="30" fontSize="12">Time: {finalStats.timeToMaxHeight.toFixed(2)}s</text>
              <text y="45" fontSize="12">Distance: {finalStats.horizontalDistanceToMaxHeight.toFixed(1)}m</text>
