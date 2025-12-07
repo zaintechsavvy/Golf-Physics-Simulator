@@ -39,3 +39,13 @@ export type TutorialStep = {
   content: string;
   placement: 'top' | 'bottom' | 'left' | 'right' | 'center';
 };
+
+export type Obstacle = {
+  type: 'tree' | 'sand';
+  x: number;
+  width: number;
+  height?: number; // For trees
+  depth?: number; // For sand traps
+};
+
+    

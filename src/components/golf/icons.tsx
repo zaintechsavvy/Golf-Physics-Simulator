@@ -104,3 +104,40 @@ export function LaunchArrowIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+
+export function TreeIcon({ x, y, width, height }: { x: number, y: number, width: number, height: number }) {
+  const trunkWidth = width * 0.4;
+  const trunkHeight = height * 0.5;
+  const trunkX = x - trunkWidth / 2;
+  const trunkY = y - trunkHeight;
+
+  const leavesRadius = width * 1.2;
+  const leavesCenterY = y - trunkHeight - leavesRadius * 0.6;
+  
+  return (
+    <g>
+      {/* Trunk */}
+      <rect x={trunkX} y={trunkY} width={trunkWidth} height={trunkHeight} fill="#8B4513" />
+      {/* Leaves */}
+      <circle cx={x} cy={leavesCenterY} r={leavesRadius} fill="#228B22" />
+      <circle cx={x - leavesRadius / 2} cy={leavesCenterY + leavesRadius / 3} r={leavesRadius * 0.8} fill="#2E8B57" />
+      <circle cx={x + leavesRadius / 2} cy={leavesCenterY + leavesRadius / 3} r={leavesRadius * 0.8} fill="#3CB371" />
+    </g>
+  );
+}
+
+export function SandTrapIcon({ x, y, width, depth }: { x: number, y: number, width: number, depth: number }) {
+  const innerWidth = width * 0.8;
+  const innerDepth = depth * 0.6;
+  return (
+     <g transform={`translate(${x - width / 2}, ${y})`}>
+      {/* Outer shape */}
+      <path d={`M 0 0 C ${width * 0.2} ${-depth}, ${width * 0.8} ${-depth}, ${width} 0 Z`} fill="#F5DEB3" />
+      {/* Inner shadow */}
+      <path d={`M ${width * 0.1} 0 C ${width * 0.3} ${-innerDepth}, ${width * 0.7} ${-innerDepth}, ${width * 0.9} 0 Z`} fill="#E1C99B" />
+    </g>
+  );
+}
+
+    

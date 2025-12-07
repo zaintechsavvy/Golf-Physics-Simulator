@@ -1,7 +1,7 @@
 'use client';
 import { forwardRef, memo } from 'react';
-import type { Point, SimulationStats, SimulationStatus } from '@/lib/types';
-import { GolfClubIcon, GolfHoleIcon, LaunchArrowIcon } from './icons';
+import type { Point, SimulationStats, SimulationStatus, Obstacle } from '@/lib/types';
+import { GolfClubIcon, GolfHoleIcon, LaunchArrowIcon, SandTrapIcon, TreeIcon } from './icons';
 
 type GolfCourseProps = {
   ballPosition: Point;
@@ -15,9 +15,9 @@ type GolfCourseProps = {
   status: SimulationStatus;
   finalStats: SimulationStats;
   launchAngle: number;
-  launchSpeed: number;
   startHeight: number;
   onAngleDragStart: (e: React.MouseEvent) => void;
+  obstacles: Obstacle[];
 };
 
 const TEE_X_OFFSET = 50;
@@ -34,9 +34,9 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   status,
   finalStats,
   launchAngle,
-  launchSpeed,
   startHeight,
   onAngleDragStart,
+  obstacles,
 }, ref) => {
   const groundY = courseHeight - 50;
   const teeY = groundY - startHeight * pixelsPerMeter;
@@ -143,6 +143,19 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
           {startHeight.toFixed(1)} m
         </text>
       )}
+
+      {/* Obstacles */}
+      {obstacles.map((obs, index) => {
+        const obsX = obs.x * pixelsPerMeter + TEE_X_OFFSET;
+        if (obs.type === 'tree') {
+          return <TreeIcon key={index} x={obsX} y={groundY} width={obs.width * pixelsPerMeter} height={obs.height! * pixelsPerMeter} />;
+        }
+        if (obs.type === 'sand') {
+          return <SandTrapIcon key={index} x={obsX} y={groundY} width={obs.width * pixelsPerMeter} depth={obs.depth! * pixelsPerMeter} />;
+        }
+        return null;
+      })}
+
       
       {/* Target Hole */}
       <g transform={`translate(${targetDistance * pixelsPerMeter + TEE_X_OFFSET}, ${groundY})`}>
@@ -250,3 +263,5 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 GolfCourse.displayName = 'GolfCourse';
 
 export default memo(GolfCourse);
+
+    

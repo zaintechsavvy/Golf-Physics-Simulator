@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { PhysicsState, SimulationStatus, SimulationStats, Point, SimulationRun, TutorialStep } from '@/lib/types';
+import type { PhysicsState, SimulationStatus, SimulationStats, Point, SimulationRun, TutorialStep, Obstacle } from '@/lib/types';
 import PhysicsControls from './PhysicsControls';
 import SimulationControls from './SimulationControls';
 import DataOverlay from './DataOverlay';
@@ -39,6 +39,11 @@ const initialStats: SimulationStats = {
   launchSpeed: 0,
   impactSpeed: 0,
 };
+
+const initialObstacles: Obstacle[] = [
+  { type: 'tree', x: 150, width: 10, height: 50 },
+  { type: 'sand', x: 220, width: 40, depth: 5 },
+];
 
 type ViewBox = {
   x: number;
@@ -86,6 +91,10 @@ export default function GolfSimulator() {
   const storeButtonRef = useRef<HTMLButtonElement>(null);
   const dataTableButtonRef = useRef<HTMLButtonElement>(null);
   const zoomControlsRef = useRef<HTMLDivElement>(null);
+  
+  const [obstacles, setObstacles] = useState<Obstacle[]>(initialObstacles);
+  const [obstaclesEnabled, setObstaclesEnabled] = useState(false);
+
 
   const tutorialSteps: TutorialStep[] = [
     {
@@ -104,6 +113,12 @@ export default function GolfSimulator() {
       targetRef: physicsControlsRef,
       title: 'Uphill & Downhill Shots',
       content: "Use the 'Start Height' slider to simulate hitting from an elevated tee. This allows you to practice uphill and downhill shots.",
+      placement: 'left',
+    },
+    {
+      targetRef: physicsControlsRef,
+      title: 'Enable Obstacles',
+      content: 'Turn this on to add a tree and a sand trap to the course for an extra challenge. The simulation will end if you hit them!',
       placement: 'left',
     },
     {
@@ -177,8 +192,7 @@ export default function GolfSimulator() {
 
   useEffect(() => {
     if (status === 'idle' || status === 'finished') {
-      const idealParams = { ...params, airResistance: false };
-      const { trajectory: arcPoints } = calculateTrajectory(idealParams, 0.1);
+      const { trajectory: arcPoints } = calculateTrajectory({ ...params, airResistance: false }, 0.1, []);
       setAimingArc(arcPoints);
     } else {
       setAimingArc([]);
@@ -232,11 +246,11 @@ export default function GolfSimulator() {
   
     if (hasFinished) {
       landSfxRef.current?.play().catch(console.error);
-      setStats(finalStats); // This was already here, but now it's just confirming the final state
+      setStats(finalStats);
       setStatus('finished');
       lastCompletedRun.current = { params, stats: finalStats };
        // @ts-ignore
-      setBallPosition(currentPoint); // Ensure final position is set
+      setBallPosition(currentPoint);
       animationFrameId.current = undefined;
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
@@ -264,17 +278,13 @@ export default function GolfSimulator() {
  const handleSwing = () => {
     resetSimulation();
     
-    // Pre-calculate the entire trajectory and stats first
-    const result = calculateTrajectory(params);
+    const currentObstacles = obstaclesEnabled ? obstacles : [];
+    const result = calculateTrajectory(params, 0.016, currentObstacles);
     trajectoryData.current = result;
 
-    // Use a callback with setStatus to guarantee order of operations
     setStatus(() => {
-      // Set the full stats immediately so child components have it
       setStats(result.finalStats); 
-      
       swingSfxRef.current?.play().catch(console.error);
-      
       return 'flying';
     });
   };
@@ -533,9 +543,9 @@ export default function GolfSimulator() {
         status={status}
         finalStats={stats}
         launchAngle={params.angle}
-        launchSpeed={params.initialVelocity}
         startHeight={params.startHeight}
         onAngleDragStart={handleAngleDragStart}
+        obstacles={obstaclesEnabled ? obstacles : []}
       />
       <DataOverlay ref={dataOverlayRef} stats={stats} status={status} />
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-4">
@@ -544,6 +554,8 @@ export default function GolfSimulator() {
             params={params}
             onParamChange={handleParamChange}
             isSimulating={status === 'flying' || status === 'paused'}
+            obstaclesEnabled={obstaclesEnabled}
+            onObstaclesToggle={setObstaclesEnabled}
           />
         </div>
         <div ref={angleControlRef}>
@@ -594,3 +606,5 @@ export default function GolfSimulator() {
     </div>
   );
 }
+
+    

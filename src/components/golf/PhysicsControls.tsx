@@ -14,11 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useState } from 'react';
+import { Separator } from '../ui/separator';
 
 type PhysicsControlsProps = {
   params: PhysicsState;
   onParamChange: (newParams: Partial<PhysicsState>) => void;
   isSimulating: boolean;
+  obstaclesEnabled: boolean;
+  onObstaclesToggle: (enabled: boolean) => void;
 };
 
 const GRAVITY_PRESETS = {
@@ -68,7 +71,13 @@ const SliderControl = ({
   </div>
 );
 
-export default function PhysicsControls({ params, onParamChange, isSimulating }: PhysicsControlsProps) {
+export default function PhysicsControls({ 
+  params, 
+  onParamChange, 
+  isSimulating,
+  obstaclesEnabled,
+  onObstaclesToggle,
+}: PhysicsControlsProps) {
   const [gravitySelection, setGravitySelection] = useState('Earth');
 
   const handleGravityChange = (selection: string) => {
@@ -172,7 +181,22 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
             />
           </div>
         </div>
+
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+            <Label htmlFor="obstacles-enabled">Enable Obstacles</Label>
+            <Switch
+              id="obstacles-enabled"
+              checked={obstaclesEnabled}
+              onCheckedChange={onObstaclesToggle}
+              disabled={isSimulating}
+            />
+          </div>
+
       </CardContent>
     </Card>
   );
 }
+
+    
