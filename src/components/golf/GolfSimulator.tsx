@@ -561,7 +561,7 @@ export default function GolfSimulator() {
         dataTableButtonRef={dataTableButtonRef}
         zoomControlsRef={zoomControlsRef}
       />
-       <div className="absolute bottom-4 right-4 z-20 text-xs text-muted-foreground">
+       <div className="absolute bottom-4 right-4 z-20 text-xs">
         <div className="flex items-center gap-4">
           <span>© 2025 Zain Pirani. All Rights Reserved.</span>
           <a
