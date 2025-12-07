@@ -307,9 +307,9 @@ export default function GolfSimulator() {
   const getIdleView = useCallback((): ViewBox => ({
     x: -150,
     y: -COURSE_HEIGHT * 0.9 + 400, // Lower the camera
-    width: COURSE_WIDTH / 0.7, // Zoom out more
-    height: COURSE_HEIGHT / 0.7,
-  }), []);
+    width: COURSE_WIDTH / zoom, 
+    height: COURSE_HEIGHT / zoom,
+  }), [zoom]);
 
   const getFlyingView = useCallback((): ViewBox => {
     // When flying, the view should be centered on the ball and zoomed.
@@ -324,23 +324,19 @@ export default function GolfSimulator() {
   }, [ballPosition, zoom]);
 
  const getFinishedView = useCallback((): ViewBox => {
-    const totalWidth = stats.horizontalDistance * PIXELS_PER_METER + 300; // Add padding
+    const totalWidth = (stats.horizontalDistance * PIXELS_PER_METER + 300) / zoom;
     const maxHeightPixels = stats.maxHeight * PIXELS_PER_METER;
-    const courseAspectRatio = COURSE_WIDTH / COURSE_HEIGHT;
   
-    let requiredHeight = totalWidth / courseAspectRatio;
-    requiredHeight = Math.max(requiredHeight, maxHeightPixels + 200); // Add vertical padding
-  
-    // Center the view vertically on the trajectory, but biased towards the ground
+    const requiredHeight = totalWidth / (COURSE_WIDTH / COURSE_HEIGHT);
     const yOffset = -requiredHeight + (COURSE_HEIGHT - 50) + (requiredHeight - maxHeightPixels) / 2 - 100;
   
     return {
-      x: -150, // Start a bit before the tee
+      x: -150,
       y: yOffset,
       width: totalWidth,
-      height: requiredHeight,
+      height: Math.max(requiredHeight, (maxHeightPixels + 200) / zoom),
     };
-  }, [stats.horizontalDistance, stats.maxHeight]);
+  }, [stats.horizontalDistance, stats.maxHeight, zoom]);
   
   const targetViewRef = useRef<ViewBox>(getIdleView());
   const cameraAnimationRef = useRef<number>();
@@ -403,7 +399,7 @@ export default function GolfSimulator() {
         cameraAnimationRef.current = undefined;
       }
     };
-  }, [status, getFinishedView, getFlyingView, getIdleView, isDragging, isSettingAngle]); 
+  }, [status, getFinishedView, getFlyingView, getIdleView, isDragging, isSettingAngle, zoom]); 
   
   useEffect(() => {
     // This effect ensures that on the first load and on resets, the camera snaps to the idle position without animation.
@@ -478,3 +474,5 @@ export default function GolfSimulator() {
     </div>
   );
 }
+
+    
