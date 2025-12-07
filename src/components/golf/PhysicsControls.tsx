@@ -124,7 +124,7 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
 
 
         <SliderControl
-          label="Ball Mass"
+          label="Golf Ball Mass"
           value={params.mass}
           min={0.01}
           max={0.1}
