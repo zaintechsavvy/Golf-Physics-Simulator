@@ -26,6 +26,7 @@ const initialPhysicsState: PhysicsState = {
   mass: 0.0459, // Standard golf ball mass in kg
   airResistance: true,
   dragCoefficient: 0.4,
+  startHeight: 0,
 };
 
 const initialStats: SimulationStats = {
@@ -150,16 +151,23 @@ export default function GolfSimulator() {
     }
     
     setStatus('idle');
-    setBallPosition({ x: 0, y: 0 });
+    setBallPosition({ x: 0, y: params.startHeight });
     setTrajectory([]);
     setStats(initialStats);
     simulationTime.current = 0;
     lastFrameTime.current = performance.now();
-  }, []);
+  }, [params.startHeight]);
 
   const handleParamChange = (newParams: Partial<PhysicsState>) => {
     setParams(prev => ({ ...prev, ...newParams }));
   };
+
+  useEffect(() => {
+    // When not simulating, update the resting ball position if startHeight changes
+    if (status === 'idle' || status === 'finished') {
+        setBallPosition({ x: 0, y: params.startHeight });
+    }
+}, [params.startHeight, status]);
 
   useEffect(() => {
     if (status === 'idle' || status === 'finished') {
@@ -227,7 +235,7 @@ export default function GolfSimulator() {
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
-  }, [isSlowMotion, status]);
+  }, [isSlowMotion, status, params]);
 
 
   useEffect(() => {
@@ -310,7 +318,7 @@ export default function GolfSimulator() {
 
     // Club's pivot point in SVG coordinates
     const pivotX = 50;
-    const pivotY = (COURSE_HEIGHT - 50);
+    const pivotY = (COURSE_HEIGHT - 50) - (params.startHeight * PIXELS_PER_METER);
     
     const dx = transformedPoint.x - pivotX;
     const dy = pivotY - transformedPoint.y; // Y is inverted in SVG
@@ -322,7 +330,7 @@ export default function GolfSimulator() {
     angleDeg = Math.max(0, Math.min(90, angleDeg));
     
     handleParamChange({ angle: angleDeg });
-  }, [isSettingAngle]);
+  }, [isSettingAngle, params.startHeight]);
   
   const handleAngleDragEnd = useCallback(() => {
     setIsSettingAngle(false);
@@ -376,10 +384,10 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = useCallback((): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * 0.7 + 300, // Lower the camera
+    y: -COURSE_HEIGHT * 0.7 + 300 - (params.startHeight * PIXELS_PER_METER),
     width: COURSE_WIDTH / zoom, 
     height: COURSE_HEIGHT / zoom,
-  }), [zoom]);
+  }), [zoom, params.startHeight]);
 
   const getFlyingView = useCallback((): ViewBox => {
     // When flying, the view should be centered on the ball and zoomed.
@@ -520,6 +528,7 @@ export default function GolfSimulator() {
         finalStats={stats}
         launchAngle={params.angle}
         launchSpeed={params.initialVelocity}
+        startHeight={params.startHeight}
         onAngleDragStart={handleAngleDragStart}
       />
       <DataOverlay ref={dataOverlayRef} stats={stats} status={status} />
@@ -562,9 +571,9 @@ export default function GolfSimulator() {
         dataTableButtonRef={dataTableButtonRef}
         zoomControlsRef={zoomControlsRef}
       />
-       <div className="absolute bottom-4 right-4 z-20 text-xs">
+       <div className="absolute bottom-4 right-4 z-20">
         <div className="flex items-center gap-4">
-          <span className="text-white">© 2025 Zain Pirani. MIT License.</span>
+          <span className="text-xs text-white">© 2025 Zain Pirani. MIT License.</span>
           <a
             href="https://github.com/zaintechsavvy/Golf-Physics-Simulator"
             target="_blank"

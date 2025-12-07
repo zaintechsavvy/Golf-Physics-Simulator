@@ -5,6 +5,7 @@ export interface PhysicsState {
   mass: number;
   airResistance: boolean;
   dragCoefficient: number;
+  startHeight: number;
 }
 
 export type SimulationStatus = 'idle' | 'flying' | 'paused' | 'finished';

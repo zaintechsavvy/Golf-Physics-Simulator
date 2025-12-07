@@ -16,6 +16,7 @@ type GolfCourseProps = {
   finalStats: SimulationStats;
   launchAngle: number;
   launchSpeed: number;
+  startHeight: number;
   onAngleDragStart: (e: React.MouseEvent) => void;
 };
 
@@ -34,9 +35,11 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   finalStats,
   launchAngle,
   launchSpeed,
+  startHeight,
   onAngleDragStart,
 }, ref) => {
   const groundY = courseHeight - 50;
+  const teeY = groundY - startHeight * pixelsPerMeter;
 
   const worldToSvg = (point: Point): Point | null => {
     if (!point) return null;
@@ -65,6 +68,8 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
   const showApexMarker = svgMaxHeightPoint && finalStats.maxHeightPoint &&
     (status === 'finished' || (isFinite(ballPosition.x) && ballPosition.x >= finalStats.maxHeightPoint.x));
 
+  const teeWidth = 40;
+
   return (
     <svg
       ref={ref}
@@ -91,6 +96,10 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
         >
           <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
         </marker>
+        <linearGradient id="teeGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--primary) / 0.8)" />
+            <stop offset="100%" stopColor="hsl(var(--primary) / 0.4)" />
+        </linearGradient>
       </defs>
 
       {/* Sky */}
@@ -98,10 +107,18 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 
       {/* Ground */}
       <rect x="-10000" y={groundY} width="20000" height="10000" fill="hsl(var(--primary))" />
+
+      {/* Tee Box */}
+      {startHeight > 0 && (
+         <g transform={`translate(${TEE_X_OFFSET - teeWidth / 2}, 0)`}>
+           <path d={`M 0 ${groundY} L ${teeWidth} ${groundY} L ${teeWidth} ${teeY} L 0 ${teeY} Z`} fill="url(#teeGradient)" />
+           <rect x="0" y={teeY} width={teeWidth} height="5" fill="hsl(var(--primary))" />
+         </g>
+      )}
       
       {/* Launch Arrow */}
        <g 
-        transform={`translate(${TEE_X_OFFSET}, ${groundY}) rotate(${-launchAngle})`} 
+        transform={`translate(${TEE_X_OFFSET}, ${teeY}) rotate(${-launchAngle})`} 
         onMouseDown={onAngleDragStart}
         className={(status === 'idle' || status === 'finished') ? 'cursor-grab active:cursor-grabbing' : ''}
       >
@@ -109,7 +126,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       </g>
       
       {/* Golf Club */}
-      <g transform={`translate(${TEE_X_OFFSET - 45}, ${groundY - 86})`}>
+      <g transform={`translate(${TEE_X_OFFSET - 45}, ${teeY - 86})`}>
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
@@ -117,7 +134,7 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
        {status !== 'flying' && status !== 'paused' && (
         <text 
           x={TEE_X_OFFSET + 20} 
-          y={groundY - 10} 
+          y={teeY - 10} 
           fontSize="14" 
           fill="white" 
           textAnchor="start"
@@ -224,11 +241,9 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       )}
       
       {/* Ball */}
-      {svgBallPosition && (status !== 'flying' && status !== 'paused' ? (
-        <circle cx={TEE_X_OFFSET} cy={groundY - 2} r="5" fill="white" stroke="black" strokeWidth="0.5" />
-      ) : (
-        <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth="1" />
-      ))}
+      {svgBallPosition && (
+        <circle cx={svgBallPosition.x} cy={svgBallPosition.y} r="5" fill="white" stroke="black" strokeWidth={status === 'idle' || status === 'finished' ? 0.5 : 1} />
+      )}
     </svg>
   );
 });

@@ -51,13 +51,13 @@ const SliderControl = ({
 }) => (
   <div className="grid gap-2">
     <div className="flex justify-between items-center">
-      <Label htmlFor={label.toLowerCase().replace(' ', '-')}>{label}</Label>
+      <Label htmlFor={label.toLowerCase().replace(/ /g, '-')}>{label}</Label>
       <span className="text-sm font-medium text-muted-foreground w-28 text-right">
         {value.toFixed(precision)} {unit}
       </span>
     </div>
     <Slider
-      id={label.toLowerCase().replace(' ', '-')}
+      id={label.toLowerCase().replace(/ /g, '-')}
       value={[value]}
       min={min}
       max={max}
@@ -95,6 +95,18 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
           disabled={isSimulating}
         />
         
+        <SliderControl
+          label="Start Height"
+          value={params.startHeight}
+          min={0}
+          max={50}
+          step={1}
+          unit="m"
+          onChange={(v) => onParamChange({ startHeight: v })}
+          disabled={isSimulating}
+          precision={0}
+        />
+
         <div className="grid gap-3">
           <Label>Gravity</Label>
            <Select onValueChange={handleGravityChange} defaultValue="Earth" disabled={isSimulating}>
