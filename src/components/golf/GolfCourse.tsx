@@ -68,6 +68,9 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 
   const teeWidth = 40;
 
+  const aimingArcLabelPoint = svgAimingArc.length > 20 ? svgAimingArc[Math.floor(svgAimingArc.length / 2)] : null;
+
+
   return (
     <svg
       ref={ref}
@@ -169,14 +172,28 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 
       {/* Aiming Arc */}
       {svgAimingArc.length > 0 && (
-        <path
-          d={aimingArcPathData}
-          fill="none"
-          stroke="hsl(var(--accent))"
-          strokeWidth="2"
-          strokeDasharray="4 8"
-          strokeOpacity="0.7"
-        />
+        <>
+          <path
+            d={aimingArcPathData}
+            fill="none"
+            stroke="hsl(var(--accent))"
+            strokeWidth="2"
+            strokeDasharray="4 8"
+            strokeOpacity="0.7"
+          />
+          {aimingArcLabelPoint && (
+            <text
+              x={aimingArcLabelPoint.x}
+              y={aimingArcLabelPoint.y - 10}
+              fill="hsl(var(--accent))"
+              fontSize="12"
+              textAnchor="middle"
+              className='font-semibold'
+            >
+              Path without air resistance
+            </text>
+          )}
+        </>
       )}
       
       {/* Trajectory Path */}
@@ -267,5 +284,3 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 GolfCourse.displayName = 'GolfCourse';
 
 export default memo(GolfCourse);
-
-    
