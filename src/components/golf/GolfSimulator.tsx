@@ -95,6 +95,7 @@ export default function GolfSimulator() {
   
   const [obstacles, setObstacles] = useState<Obstacle[]>(initialObstacles);
   const [obstaclesEnabled, setObstaclesEnabled] = useState(false);
+  const [obstacleHit, setObstacleHit] = useState(false);
 
 
   const tutorialSteps: TutorialStep[] = [
@@ -173,6 +174,7 @@ export default function GolfSimulator() {
     }
     
     setStatus('idle');
+    setObstacleHit(false);
     setBallPosition({ x: 0, y: params.startHeight });
     setTrajectory([]);
     setStats(initialStats);
@@ -249,14 +251,25 @@ export default function GolfSimulator() {
       landSfxRef.current?.play().catch(console.error);
       setStats(finalStats);
       setStatus('finished');
-      lastCompletedRun.current = { params, stats: finalStats };
+
+      if (finalStats.collision) {
+        setObstacleHit(true);
+        toast({
+          variant: "destructive",
+          title: "Oops! You hit an obstacle.",
+          description: "You'll have to reset the simulation to try again.",
+        });
+      } else {
+         lastCompletedRun.current = { params, stats: finalStats };
+      }
+
        // @ts-ignore
       setBallPosition(currentPoint);
       animationFrameId.current = undefined;
     } else {
       animationFrameId.current = requestAnimationFrame(simulationLoop);
     }
-  }, [isSlowMotion, status, params]);
+  }, [isSlowMotion, status, params, toast]);
 
 
   useEffect(() => {
@@ -295,7 +308,7 @@ export default function GolfSimulator() {
   const handleClearPath = () => setTrajectory([ballPosition]);
 
   const handleStoreRun = () => {
-    if (lastCompletedRun.current) {
+    if (lastCompletedRun.current && !obstacleHit) {
       setStoredRuns(prev => [...prev, {
         id: Date.now(),
         params: lastCompletedRun.current!.params,
@@ -309,7 +322,7 @@ export default function GolfSimulator() {
        toast({
         variant: "destructive",
         title: "No data to store",
-        description: "You must complete a simulation before storing the data.",
+        description: "You must complete a simulation without hitting an obstacle before storing the data.",
       });
     }
   };
@@ -317,6 +330,7 @@ export default function GolfSimulator() {
   // --- ANGLE DRAG LOGIC ---
   const handleAngleDragStart = (e: React.MouseEvent) => {
     if (status !== 'idle' && status !== 'finished') return;
+    if (obstacleHit) return;
     e.stopPropagation(); // Prevent canvas drag
     setIsSettingAngle(true);
   };
@@ -553,7 +567,7 @@ export default function GolfSimulator() {
           <PhysicsControls
             params={params}
             onParamChange={handleParamChange}
-            isSimulating={status === 'flying' || status === 'paused'}
+            isSimulating={status === 'flying' || status === 'paused' || obstacleHit}
             obstaclesEnabled={obstaclesEnabled}
             onObstaclesToggle={setObstaclesEnabled}
           />
@@ -562,7 +576,7 @@ export default function GolfSimulator() {
           <AngleControl
             angle={params.angle}
             onAngleChange={(angle) => handleParamChange({ angle })}
-            disabled={status === 'flying' || status === 'paused'}
+            disabled={status === 'flying' || status === 'paused' || obstacleHit}
           />
         </div>
       </div>
@@ -578,7 +592,7 @@ export default function GolfSimulator() {
         onZoomOut={() => setZoom(z => Math.max(z / 1.2, 0.2))}
         onToggleSlowMotion={() => setSlowMotion(s => !s)}
         onStoreRun={handleStoreRun}
-        canStoreRun={status === 'finished'}
+        canStoreRun={status === 'finished' && !obstacleHit}
         dataTable={<DataTable runs={storedRuns} onClear={() => setStoredRuns([])} />}
         onShowTutorial={() => {
           setTutorialStep(0);
@@ -588,6 +602,7 @@ export default function GolfSimulator() {
         storeButtonRef={storeButtonRef}
         dataTableButtonRef={dataTableButtonRef}
         zoomControlsRef={zoomControlsRef}
+        swingDisabled={obstacleHit}
       />
        <div className="absolute bottom-4 right-4 z-20">
         <div className="flex items-center gap-4">

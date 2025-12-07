@@ -19,6 +19,7 @@ export interface SimulationStats {
   horizontalDistanceToMaxHeight: number;
   launchSpeed: number;
   impactSpeed: number;
+  collision?: 'tree' | 'sand';
 }
 
 export type Point = {

@@ -29,6 +29,7 @@ type SimulationControlsProps = {
   storeButtonRef: React.Ref<HTMLButtonElement>;
   dataTableButtonRef: React.Ref<HTMLButtonElement>;
   zoomControlsRef: React.Ref<HTMLDivElement>;
+  swingDisabled?: boolean;
 };
 
 const ControlButton = ({ tooltip, children, ...props }: { tooltip: string } & React.ComponentProps<typeof Button>) => (
@@ -61,6 +62,7 @@ export default function SimulationControls({
   storeButtonRef,
   dataTableButtonRef,
   zoomControlsRef,
+  swingDisabled = false,
 }: SimulationControlsProps) {
   const isSimulating = status === 'flying' || status === 'paused';
 
@@ -69,7 +71,7 @@ export default function SimulationControls({
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
         <div className="flex items-center gap-2 p-2 bg-card/80 backdrop-blur-sm rounded-lg shadow-lg">
           {status !== 'flying' && status !== 'paused' && (
-            <Button ref={swingButtonRef} size="lg" onClick={onSwing} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+            <Button ref={swingButtonRef} size="lg" onClick={onSwing} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={swingDisabled}>
               <Play className="mr-2 h-5 w-5 fill-current" />
               Swing
             </Button>

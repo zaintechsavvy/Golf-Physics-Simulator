@@ -117,7 +117,10 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number, obstacle
   if (vy <= 0 && y === 0) {
       return {
           trajectory: [{ x: 0, y: 0, t: 0 }],
-          finalStats: { /* same as analytical */ }
+          finalStats: { 
+            flightTime: 0, horizontalDistance: 0, maxHeight: 0, maxHeightPoint: {x: 0, y: 0, t: 0},
+            timeToMaxHeight: 0, horizontalDistanceToMaxHeight: 0, launchSpeed: params.initialVelocity, impactSpeed: params.initialVelocity
+           }
       };
   }
 
@@ -157,6 +160,7 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number, obstacle
                 flightTime: t, horizontalDistance: x, maxHeight, maxHeightPoint,
                 timeToMaxHeight: maxHeightPoint?.t || 0, horizontalDistanceToMaxHeight: maxHeightPoint?.x || 0,
                 launchSpeed: params.initialVelocity, impactSpeed: Math.sqrt(vx**2 + vy**2),
+                collision: 'tree',
             };
             return { trajectory, finalStats };
         }
@@ -176,7 +180,8 @@ function calculateNumericalTrajectory(params: PhysicsState, dt: number, obstacle
              const finalStats: SimulationStats = {
                 flightTime: finalTime, horizontalDistance: finalX, maxHeight, maxHeightPoint,
                 timeToMaxHeight: maxHeightPoint?.t || 0, horizontalDistanceToMaxHeight: maxHeightPoint?.x || 0,
-                launchSpeed: params.initialVelocity, impactSpeed: 0 // Landed in sand
+                launchSpeed: params.initialVelocity, impactSpeed: 0, // Landed in sand
+                collision: 'sand',
              };
              return { trajectory, finalStats };
           }
