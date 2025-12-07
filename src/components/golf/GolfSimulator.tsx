@@ -566,7 +566,7 @@ export default function GolfSimulator() {
         <div className="flex items-center gap-4">
           <span className="text-white">© 2025 Zain Pirani. All Rights Reserved.</span>
           <a
-            href="https://github.com/your-username/your-repo"
+            href="https://github.com/zaintechsavvy/Golf-Physics-Simulator"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 hover:text-foreground transition-colors"
