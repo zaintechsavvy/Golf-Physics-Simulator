@@ -41,8 +41,10 @@ const initialStats: SimulationStats = {
 };
 
 const initialObstacles: Obstacle[] = [
-  { type: 'tree', x: 150, width: 10, height: 50 },
-  { type: 'sand', x: 220, width: 40, depth: 5 },
+  { type: 'tree', x: 80, width: 8, height: 30 },
+  { type: 'sand', x: 120, width: 30, depth: 5 },
+  { type: 'tree', x: 160, width: 10, height: 40 },
+  { type: 'tree', x: 185, width: 7, height: 25 },
 ];
 
 type ViewBox = {
@@ -606,5 +608,3 @@ export default function GolfSimulator() {
     </div>
   );
 }
-
-    
