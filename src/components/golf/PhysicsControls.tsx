@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useState } from 'react';
-import { Separator } from '../ui/separator';
 
 type PhysicsControlsProps = {
   params: PhysicsState;
@@ -77,8 +76,6 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
     }
   };
   
-  const gravitationalForce = params.mass * params.gravity;
-
   return (
     <Card className="w-80 shadow-lg bg-card/80 backdrop-blur-sm">
       <CardHeader>
@@ -136,15 +133,6 @@ export default function PhysicsControls({ params, onParamChange, isSimulating }:
           onChange={(v) => onParamChange({ mass: v })}
           disabled={isSimulating}
         />
-
-        <div className="grid gap-3">
-          <Separator />
-           <div className="flex justify-between items-center text-sm">
-             <span className="font-semibold">Force of Gravity (F<sub>g</sub> = mg)</span>
-             <span className="font-bold text-base tabular-nums">{gravitationalForce.toFixed(2)} N</span>
-           </div>
-          <Separator />
-        </div>
 
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
