@@ -50,7 +50,7 @@ export default function GolfSimulator() {
   const [trajectory, setTrajectory] = useState<Point[]>([]);
   const [aimingArc, setAimingArc] = useState<Point[]>([]);
   const [stats, setStats] = useState<SimulationStats>(initialStats);
-  const [zoom, setZoom] = useState(0.8);
+  const [zoom, setZoom] = useState(0.6);
   const [isSlowMotion, setSlowMotion] = useState(false);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -306,7 +306,7 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = useCallback((): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * 0.9 + 400, // Lower the camera
+    y: -COURSE_HEIGHT * 0.7 + 300, // Lower the camera
     width: COURSE_WIDTH / zoom, 
     height: COURSE_HEIGHT / zoom,
   }), [zoom]);
