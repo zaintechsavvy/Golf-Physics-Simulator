@@ -128,17 +128,17 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
         <GolfClubIcon swingState={status} launchAngle={launchAngle} />
       </g>
 
-       {/* Height Display */}
+       {/* Height Display on Y-axis */}
        {(status === 'idle' || status === 'finished') && startHeight > 0 && (
         <text
-          x={TEE_X_OFFSET + 20}
-          y={teeY - 10}
+          x={TEE_X_OFFSET - teeWidth / 2 - 8}
+          y={teeY + 4}
           fontSize="14"
           fill="white"
-          textAnchor="start"
+          textAnchor="end"
           className="font-semibold"
         >
-          {startHeight.toFixed(1)} m
+          {startHeight.toFixed(1)}m
         </text>
       )}
 
