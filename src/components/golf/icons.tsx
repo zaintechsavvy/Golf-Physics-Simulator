@@ -64,18 +64,24 @@ export function GolfClubIcon({ swingState, launchAngle }: { swingState: Simulati
   );
 }
 
-export function GolfFlagIcon(props: SVGProps<SVGSVGElement>) {
+export function GolfHoleIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      width="40"
+      width="80"
       height="80"
-      viewBox="0 0 40 80"
+      viewBox="-40 -80 80 80"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-      <path d="M10 75V5" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <path d="M12 9L30 17L12 25V9Z" fill="hsl(var(--destructive))" stroke="hsl(var(--destructive))" strokeWidth="2" strokeLinejoin="round"/>
+      {/* The green cutout */}
+      <path d="M -30 0 C -30 -10, 30 -10, 30 0" fill="hsl(var(--primary))" />
+      {/* The hole */}
+      <ellipse cx="0" cy="0" rx="15" ry="3" fill="black" />
+       {/* Pin */}
+      <path d="M 0 0 V -70" stroke="currentColor" strokeWidth="2" />
+       {/* Flag */}
+      <path d="M 2 -68 L 20 -60 L 2 -52 Z" fill="hsl(var(--destructive))" />
     </svg>
   );
 }

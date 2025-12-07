@@ -1,7 +1,7 @@
 'use client';
 import { forwardRef, memo } from 'react';
 import type { Point, SimulationStats, SimulationStatus } from '@/lib/types';
-import { GolfClubIcon, GolfFlagIcon, LaunchArrowIcon } from './icons';
+import { GolfClubIcon, GolfHoleIcon, LaunchArrowIcon } from './icons';
 
 type GolfCourseProps = {
   ballPosition: Point;
@@ -123,10 +123,10 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
         </text>
       )}
       
-      {/* Target Flag */}
-      <g transform={`translate(${targetDistance * pixelsPerMeter + TEE_X_OFFSET - 10}, ${groundY - 75})`}>
-        <GolfFlagIcon />
-        <text x="0" y="25" fontSize="14" fill="currentColor" textAnchor="middle">{targetDistance}m</text>
+      {/* Target Hole */}
+      <g transform={`translate(${targetDistance * pixelsPerMeter + TEE_X_OFFSET}, ${groundY})`}>
+        <GolfHoleIcon />
+        <text x="0" y="-80" fontSize="14" fill="currentColor" textAnchor="middle">{targetDistance}m</text>
       </g>
 
       {/* Aiming Arc */}
