@@ -130,16 +130,29 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
 
        {/* Height Display on Y-axis */}
        {(status === 'idle' || status === 'finished') && startHeight > 0 && (
-        <text
-          x={TEE_X_OFFSET - teeWidth / 2 - 8}
-          y={teeY + 4}
-          fontSize="14"
-          fill="white"
-          textAnchor="end"
-          className="font-semibold"
-        >
-          {startHeight.toFixed(1)}m
-        </text>
+          <g className="text-foreground">
+            <line
+              x1={TEE_X_OFFSET - teeWidth - 20}
+              y1={groundY}
+              x2={TEE_X_OFFSET - teeWidth - 20}
+              y2={teeY}
+              stroke="currentColor"
+              strokeWidth="2"
+              markerStart="url(#arrowhead)"
+              markerEnd="url(#arrowhead)"
+            />
+            <text
+              x={TEE_X_OFFSET - teeWidth - 25}
+              y={teeY + (groundY - teeY) / 2}
+              fontSize="16"
+              fill="currentColor"
+              textAnchor="end"
+              dominantBaseline="middle"
+              className="font-semibold"
+            >
+              {startHeight.toFixed(1)}m
+            </text>
+          </g>
       )}
 
       {/* Obstacles */}
