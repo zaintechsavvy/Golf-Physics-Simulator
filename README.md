@@ -10,6 +10,7 @@ On the right side of the screen, you'll find the **Physics Controls** card. Here
 - **Gravity**: Choose from presets like Earth, Moon, or Mars, or select "Custom" to set a specific gravitational acceleration.
 - **Ball Mass**: Adjust the mass of the golf ball (in kilograms).
 - **Air Resistance**: Toggle air resistance on or off. When enabled, you can also set the **Drag Coefficient**.
+- **Start Height**: Use this slider to simulate hitting from an elevated tee, allowing you to practice uphill and downhill shots.
 
 ### 2. Set the Launch Angle
 You can set the launch angle in two ways:
