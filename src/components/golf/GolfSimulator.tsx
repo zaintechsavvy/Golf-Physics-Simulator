@@ -97,7 +97,13 @@ export default function GolfSimulator() {
     {
       targetRef: physicsControlsRef,
       title: 'Physics Controls',
-      content: 'Here you can adjust parameters like Initial Velocity, Gravity, Ball Mass, and Air Resistance. Try changing them!',
+      content: 'Here you can adjust parameters like Initial Velocity, Gravity, and Ball Mass. Try changing them!',
+      placement: 'left',
+    },
+    {
+      targetRef: physicsControlsRef,
+      title: 'Uphill & Downhill Shots',
+      content: "Use the 'Start Height' slider to simulate hitting from an elevated tee. This allows you to practice uphill and downhill shots.",
       placement: 'left',
     },
     {
@@ -384,7 +390,7 @@ export default function GolfSimulator() {
   // --- CAMERA LOGIC ---
   const getIdleView = useCallback((): ViewBox => ({
     x: -150,
-    y: -COURSE_HEIGHT * 0.7 + 300,
+    y: COURSE_HEIGHT - (COURSE_HEIGHT / zoom),
     width: COURSE_WIDTH / zoom, 
     height: COURSE_HEIGHT / zoom,
   }), [zoom]);
