@@ -184,9 +184,9 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
           {aimingArcLabelPoint && (
             <text
               x={aimingArcLabelPoint.x}
-              y={aimingArcLabelPoint.y - 10}
-              fill="hsl(var(--accent))"
-              fontSize="12"
+              y={aimingArcLabelPoint.y - 15}
+              fill="hsl(var(--foreground))"
+              fontSize="16"
               textAnchor="middle"
               className='font-semibold'
             >
