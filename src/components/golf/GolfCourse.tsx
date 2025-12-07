@@ -90,10 +90,10 @@ const GolfCourse = forwardRef<SVGSVGElement, GolfCourseProps>(({
       </defs>
 
       {/* Sky */}
-      <rect x={-courseWidth*2} y={-courseHeight*2} width={courseWidth * 5} height={groundY + courseHeight*2} fill="url(#skyGradient)" />
+      <rect x="-10000" y="-10000" width="20000" height={groundY + 10000} fill="url(#skyGradient)" />
 
       {/* Ground */}
-      <rect x={-courseWidth*2} y={groundY} width={courseWidth * 5} height={courseHeight} fill="hsl(var(--primary))" />
+      <rect x="-10000" y={groundY} width="20000" height="10000" fill="hsl(var(--primary))" />
       
       {/* Launch Arrow */}
        <g 
