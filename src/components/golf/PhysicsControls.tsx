@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { useState } from 'react';
 import { Separator } from '../ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 type PhysicsControlsProps = {
   params: PhysicsState;
@@ -79,11 +80,22 @@ export default function PhysicsControls({
   onObstaclesToggle,
 }: PhysicsControlsProps) {
   const [gravitySelection, setGravitySelection] = useState('Earth');
+  const { toast } = useToast();
 
   const handleGravityChange = (selection: string) => {
     setGravitySelection(selection);
     if (selection !== 'Custom') {
       onParamChange({ gravity: GRAVITY_PRESETS[selection as keyof typeof GRAVITY_PRESETS] });
+    }
+  };
+
+  const handleAirResistanceChange = (checked: boolean) => {
+    onParamChange({ airResistance: checked });
+    if (!checked) {
+      toast({
+        title: "Physics Hint",
+        description: "With air resistance off, the golf ball's mass no longer affects its motion.",
+      });
     }
   };
   
@@ -164,7 +176,7 @@ export default function PhysicsControls({
             <Switch
               id="air-resistance"
               checked={params.airResistance}
-              onCheckedChange={(c) => onParamChange({ airResistance: c })}
+              onCheckedChange={handleAirResistanceChange}
               disabled={isSimulating}
             />
           </div>
@@ -198,5 +210,3 @@ export default function PhysicsControls({
     </Card>
   );
 }
-
-    
